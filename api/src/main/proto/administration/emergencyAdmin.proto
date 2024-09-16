@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/empty.proto";
+
+package administration;
+
+option java_package = "ar.edi.itba.tp1g5";
+option java_outer_classname = "emergencyServiceAdminServiceModel";
+option java_multiple_files = true;
+
+service emergencyServiceAdminService {
+  rpc AddRoom(google.protobuf.Empty) returns (AddDoctorResponse);
+  rpc AddDoctor(AddDoctorRequest) returns (AddDoctorResponse);
+  rpc SetDoctor(AddDoctorRequest) returns (AddDoctorResponse);
+  rpc CheckDoctor(AddDoctorRequest) returns (AddDoctorResponse);
+}
+
+message AddDoctorRequest {
+  string doctorName = 1;
+  int32 level = 2;
+  string availability = 3;
+}
+
+message AddDoctorResponse {
+  int32 doctorName = 1;
+  int32 level = 2;
+  string availability = 3;
+}
