@@ -5,25 +5,31 @@ import "google/protobuf/empty.proto";
 
 package administration;
 
-option java_package = "ar.edi.itba.tp1g5";
-option java_outer_classname = "emergencyServiceAdminServiceModel";
+option java_package = "ar.edu.itba.tp1g5";
+option java_outer_classname = "emergencyAdminServiceModel";
 option java_multiple_files = true;
 
-service emergencyServiceAdminService {
-  rpc AddRoom(google.protobuf.Empty) returns (AddDoctorResponse);
+service EmergencyAdminService {
+  rpc AddRoom(google.protobuf.Empty) returns (AddRoomResponse);
   rpc AddDoctor(AddDoctorRequest) returns (AddDoctorResponse);
   rpc SetDoctor(AddDoctorRequest) returns (AddDoctorResponse);
   rpc CheckDoctor(AddDoctorRequest) returns (AddDoctorResponse);
+}
+
+message AddRoomResponse {
+  int32 room = 1;
 }
 
 message AddDoctorRequest {
   string doctorName = 1;
   int32 level = 2;
   string availability = 3;
+  int32 room = 4;
 }
 
 message AddDoctorResponse {
-  int32 doctorName = 1;
+  string doctorName = 1;
   int32 level = 2;
   string availability = 3;
+  int32 room = 4;
 }
