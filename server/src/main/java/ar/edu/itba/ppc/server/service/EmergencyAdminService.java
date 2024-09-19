@@ -1,15 +1,17 @@
 package ar.edu.itba.ppc.server.service;
 
-import ar.edu.itba.tp1g5.AddDoctorRequest;
-import ar.edu.itba.tp1g5.AddDoctorResponse;
-import ar.edu.itba.tp1g5.AddRoomResponse;
-import ar.edu.itba.tp1g5.EmergencyAdminServiceGrpc;
+import ar.edu.itba.tp1g5.DoctorRequest;
+import ar.edu.itba.tp1g5.DoctorResponse;
+import ar.edu.itba.tp1g5.RoomResponse;
+import ar.edu.itba.tp1g5.emergencyAdminServiceGrpc;
+import ar.edu.itba.ppc.server.dto.AddDoctorResponse;
+import ar.edu.itba.ppc.server.dto.AddRoomResponse;
+import ar.edu.itba.ppc.server.dto.InfoDoctorResponse;
 import ar.edu.itba.ppc.server.repository.EmergencyAdminRepository;
 import com.google.protobuf.Empty;
 import io.grpc.stub.StreamObserver;
 
-
-public class EmergencyAdminService extends EmergencyAdminServiceGrpc.EmergencyAdminServiceImplBase {
+public class EmergencyAdminService extends emergencyAdminServiceGrpc.emergencyAdminServiceImplBase {
     private final EmergencyAdminRepository repository;
 
     public EmergencyAdminService(EmergencyAdminRepository repository) {
@@ -17,41 +19,46 @@ public class EmergencyAdminService extends EmergencyAdminServiceGrpc.EmergencyAd
     }
 
     @Override
-    public void addRoom(Empty request, StreamObserver<AddRoomResponse> responseObserver) {
-        Integer room = repository.addRoom();
-        AddRoomResponse reply = AddRoomResponse.newBuilder().setRoom(room).build();
-        responseObserver.onNext(reply);
-        responseObserver.onCompleted();
-    }
-
-    @Override
-    public void addDoctor(AddDoctorRequest request, StreamObserver<AddDoctorResponse> responseObserver) {
-        Integer level = repository.addDoctor(request.getDoctorName(), request.getLevel());
-        AddDoctorResponse reply = AddDoctorResponse.newBuilder()
-                .setDoctorName(request.getDoctorName())
-                .setLevel(level)
+    public void addRoom(Empty request, StreamObserver<RoomResponse> responseObserver) {
+        AddRoomResponse response = repository.addRoom();
+        RoomResponse reply = RoomResponse.newBuilder()
+                .setRoom(response.room())
+                .setStatus(response.status())
                 .build();
         responseObserver.onNext(reply);
         responseObserver.onCompleted();
     }
 
     @Override
-    public void setDoctor(AddDoctorRequest request, StreamObserver<AddDoctorResponse> responseObserver) {
-        String availability = repository.setDoctor(request.getDoctorName(), request.getAvailability());
-        AddDoctorResponse reply = AddDoctorResponse.newBuilder()
-                .setDoctorName(request.getDoctorName())
-                .setAvailability(availability)
+    public void addDoctor(DoctorRequest request, StreamObserver<DoctorResponse> responseObserver) {
+        AddDoctorResponse response = repository.addDoctor(request.getDoctorName(), request.getLevel());
+        DoctorResponse reply = DoctorResponse.newBuilder()
+                .setDoctorName(response.doctorName())
+                .setLevel(response.level())
                 .build();
         responseObserver.onNext(reply);
         responseObserver.onCompleted();
     }
 
     @Override
-    public void checkDoctor(AddDoctorRequest request, StreamObserver<AddDoctorResponse> responseObserver) {
-        String availability = repository.checkDoctor(request.getDoctorName());
-        AddDoctorResponse reply = AddDoctorResponse.newBuilder()
-                .setDoctorName(request.getDoctorName())
-                .setAvailability(availability)
+    public void setDoctor(DoctorRequest request, StreamObserver<DoctorResponse> responseObserver) {
+        InfoDoctorResponse response = repository.setDoctor(request.getDoctorName(), request.getAvailability());
+        DoctorResponse reply = DoctorResponse.newBuilder()
+                .setDoctorName(response.doctorName())
+                .setLevel(response.level())
+                .setAvailability(response.availability())
+                .build();
+        responseObserver.onNext(reply);
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void checkDoctor(DoctorRequest request, StreamObserver<DoctorResponse> responseObserver) {
+        InfoDoctorResponse response = repository.checkDoctor(request.getDoctorName());
+        DoctorResponse reply = DoctorResponse.newBuilder()
+                .setDoctorName(response.doctorName())
+                .setLevel(response.level())
+                .setAvailability(response.availability())
                 .build();
         responseObserver.onNext(reply);
         responseObserver.onCompleted();

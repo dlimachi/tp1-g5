@@ -1,6 +1,5 @@
 package ar.edu.itba.ppc.server.service;
 
-import ar.edu.itba.tp1g5.AddDoctorResponse;
 import ar.edu.itba.tp1g5.StartEmergencyCareRequest;
 import ar.edu.itba.tp1g5.StartEmergencyCareResponse;
 import ar.edu.itba.ppc.server.model.EmeregencyCare;
@@ -17,9 +16,10 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
 
     @Override
     public void startEmergencyCare(StartEmergencyCareRequest request, StreamObserver<StartEmergencyCareResponse> responseObserver) {
-        EmeregencyCare room = repository.assignRoom(request.getRoom());
+        EmeregencyCare emeregencyCare = repository.assignRoom(request.getRoom());
         StartEmergencyCareResponse reply = StartEmergencyCareResponse.newBuilder()
-                .setRoom(room.getRoom())
+                .setDoctorName(emeregencyCare.getDoctorName())
+                .setRoom(emeregencyCare.getRoom())
                 .build();
         responseObserver.onNext(reply);
         responseObserver.onCompleted();

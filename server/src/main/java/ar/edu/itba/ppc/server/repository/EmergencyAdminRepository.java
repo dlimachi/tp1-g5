@@ -1,28 +1,33 @@
 package ar.edu.itba.ppc.server.repository;
 
+import ar.edu.itba.ppc.server.constants.Availabilities;
+import ar.edu.itba.ppc.server.dto.AddRoomResponse;
+import ar.edu.itba.ppc.server.dto.InfoDoctorResponse;
 import ar.edu.itba.ppc.server.exceptions.DoctorAlreadyExistsException;
+import ar.edu.itba.ppc.server.dto.AddDoctorResponse;
+import ar.edu.itba.ppc.server.exceptions.DoctorDoesntExistsException;
+import ar.edu.itba.ppc.server.exceptions.InvalidAvailabilityParameter;
+import ar.edu.itba.ppc.server.exceptions.RoomDoesntExistsException;
 import ar.edu.itba.ppc.server.model.Doctor;
 import ar.edu.itba.ppc.server.model.EmeregencyCare;
+import ar.edu.itba.ppc.server.model.Room;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class EmergencyAdminRepository {
     private static final Set<String> VALID_AVAILABILITIES = Set.of("available", "unavailable", "attending");
 
     private final Map<String, Doctor> doctors;
-    private final List<Integer> rooms;
+    private final List<Room> rooms;
 
-    private Integer sizeRoom = 0;
+    private Integer sizeRoom = 1;
 
     public Map<String, Doctor> getDoctors() {
         return doctors;
     }
 
-    public List<Integer> getRooms() {
+    public List<Room> getRooms() {
         return rooms;
     }
 
@@ -31,47 +36,51 @@ public class EmergencyAdminRepository {
         rooms = new ArrayList<>();
     }
 
-    public Integer addRoom() {
-        rooms.add(sizeRoom++);
-        return sizeRoom;
+    public AddRoomResponse addRoom() {
+        rooms.add(new Room(sizeRoom, Availabilities.AVAILABLE.getValue()));
+        return new AddRoomResponse(sizeRoom++, Availabilities.AVAILABLE.getValue());
     }
 
-    public Integer addDoctor(String doctorName, Integer level) {
+    public AddDoctorResponse addDoctor(String doctorName, Integer level) {
         if (doctors.containsKey(doctorName) || level < 1 || level > 5) {
-            throw  new DoctorAlreadyExistsException(doctorName);
+            throw new DoctorAlreadyExistsException(doctorName);
         }
-        doctors.putIfAbsent(doctorName, new Doctor(doctorName, level, "available"));
-        return level;
+        doctors.putIfAbsent(doctorName, new Doctor(doctorName, level, Availabilities.AVAILABLE.getValue()));
+        return new AddDoctorResponse(doctorName, level);
     }
 
-    public String setDoctor(String doctorName, String availability) {
-        if (!doctors.containsKey(doctorName) || VALID_AVAILABILITIES.contains(availability)) {
-            return null;
-        }
-        doctors.get(doctorName).setAvailability(availability);
-        return availability;
-    }
-
-    public String checkDoctor(String doctorName) {
+    public InfoDoctorResponse setDoctor(String doctorName, String availability) {
         if (!doctors.containsKey(doctorName)) {
-            return null;
+            throw new DoctorDoesntExistsException(doctorName);
         }
-        return doctors.get(doctorName).getAvailability();
+        if(!VALID_AVAILABILITIES.contains(availability)){
+            throw new InvalidAvailabilityParameter(availability);
+        }
+
+        doctors.get(doctorName).setAvailability(availability);
+        return new InfoDoctorResponse(doctorName, doctors.get(doctorName).getLevel(), availability);
+    }
+
+    public InfoDoctorResponse checkDoctor(String doctorName) {
+        if (!doctors.containsKey(doctorName)) {
+            throw new DoctorDoesntExistsException(doctorName);
+        }
+        return new InfoDoctorResponse(doctorName, doctors.get(doctorName).getLevel(), doctors.get(doctorName).getAvailability());
     }
 
     public synchronized EmeregencyCare assignRoom(Integer room) {
         if(!rooms.contains(room)) {
-            return null;
+            throw new RoomDoesntExistsException(room);
         }
 
-        for (Doctor doctor : doctors.values()) {
-            if (doctor.getAvailability().equals("available")) {
-                doctor.setAvailability("attending");
-                return new EmeregencyCare(room, doctor.getDoctorName(), "patient");
-            }
-        }
+        Optional<Doctor> availableDoctor = doctors.values().stream()
+                .filter(doctor -> doctor.getAvailability().equals(Availabilities.AVAILABLE.getValue()))
+                .sorted(Comparator.comparing(Doctor::getLevel)
+                        .reversed()
+                        .thenComparing(Doctor::getDoctorName))
+                .findFirst();
 
-        return null;
+        return new EmeregencyCare(room, availableDoctor.get().getDoctorName(), "patient");
     }
 
 

@@ -22,3 +22,4 @@ message StartEmergencyCareResponse {
   string doctorName = 2;
   string patientName = 3;
 }
+

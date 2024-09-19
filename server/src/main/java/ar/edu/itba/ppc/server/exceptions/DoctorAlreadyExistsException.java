@@ -1,14 +1,14 @@
 package ar.edu.itba.ppc.server.exceptions;
 
 public class DoctorAlreadyExistsException extends RuntimeException {
-    private final String sectorName;
+    private final String doctorName;
 
-    public DoctorAlreadyExistsException(String sectorName) {
-        this.sectorName = sectorName;
+    public DoctorAlreadyExistsException(String doctorName) {
+        this.doctorName = doctorName;
     }
 
     @Override
     public String getMessage() {
-        return "Doctor " + sectorName + " already exists";
+        return "Doctor " + doctorName + " already exists";
     }
 }

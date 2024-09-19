@@ -37,7 +37,10 @@ public class GlobalExceptionHandlerInterceptor implements ServerInterceptor {
         }
 
         private final Map<Class<? extends Throwable>, Code> errorCodesByException = Map.ofEntries(
-                Map.entry(DoctorAlreadyExistsException.class, Code.ALREADY_EXISTS)
+                Map.entry(DoctorAlreadyExistsException.class, Code.ALREADY_EXISTS),
+                Map.entry(DoctorDoesntExistsException.class, Code.NOT_FOUND),
+                Map.entry(InvalidAvailabilityParameter.class, Code.INVALID_ARGUMENT),
+                Map.entry(RoomDoesntExistsException.class, Code.NOT_FOUND)
         );
 
         private void handleException(RuntimeException exception, ServerCall<T, R> serverCall, Metadata headers) {
