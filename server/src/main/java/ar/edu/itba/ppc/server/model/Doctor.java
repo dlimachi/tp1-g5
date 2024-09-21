@@ -5,11 +5,21 @@ public class Doctor {
     String doctorName;
     Integer level;
     String availability;
+    String room;
 
-    public Doctor(String doctorName, Integer level, String available) {
+    public Doctor(String doctorName, Integer level, String available, String room) {
         this.doctorName = doctorName;
         this.level = level;
         this.availability = available;
+        this.room = room;
+    }
+
+    public String getRoom() {
+        return room;
+    }
+
+    public void setRoom(String room) {
+        this.room = room;
     }
 
     public String getDoctorName() {

@@ -1,4 +1,4 @@
-package ar.edu.itba.ppc.server.model;
+package ar.edu.itba.ppc.server.dto;
 
 public class EmeregencyCare {
     private Integer room;

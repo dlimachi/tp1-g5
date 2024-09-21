@@ -1,7 +1,6 @@
 package ar.edu.itba.ppc.client;
 
-import ar.edi.itba.tp1g5.*;
-import com.google.protobuf.Empty;
+import ar.edu.itba.tp1g5.*;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.slf4j.Logger;
@@ -24,12 +23,22 @@ public class EmergencyCareClient {
                     EmergencyCareServiceGrpc.newBlockingStub(channel);
 
             StartEmergencyCareRequest request = StartEmergencyCareRequest.newBuilder()
-                    .setRoom(2)
+                    .setRoom(1)
                     .build();
 
-            StartEmergencyCareResponse reply = blockingStub.startEmergencyCare(request);
+            EmergencyCareResponse reply = blockingStub.startEmergencyCare(request);
             System.out.println(reply.getRoom());
+            System.out.println(reply.getDoctorName());
 
+            EndEmergencyCareRequest request2 = EndEmergencyCareRequest.newBuilder()
+                    .setRoom(1)
+                    .setDoctorName("Dr. House")
+                    .setPatientName("patient")
+                    .build();
+
+            EmergencyCareResponse reply2 = blockingStub.endEmergencyCare(request2);
+            System.out.println(reply2.getRoom());
+            System.out.println(reply2.getDoctorName());
 
         }
         catch (Exception e) {

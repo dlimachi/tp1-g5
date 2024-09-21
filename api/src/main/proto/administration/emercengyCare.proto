@@ -10,14 +10,21 @@ option java_outer_classname = "emergencyCareServiceModel";
 option java_multiple_files = true;
 
 service EmergencyCareService {
-  rpc StartEmergencyCare(StartEmergencyCareRequest) returns (StartEmergencyCareResponse);
+  rpc StartEmergencyCare(StartEmergencyCareRequest) returns (EmergencyCareResponse);
+  rpc EndEmergencyCare(EndEmergencyCareRequest) returns (EmergencyCareResponse);
 }
 
 message StartEmergencyCareRequest {
   int32 room = 1;
 }
 
-message StartEmergencyCareResponse {
+message EndEmergencyCareRequest {
+  int32 room = 1;
+  string doctorName = 2;
+  string patientName = 3;
+}
+
+message EmergencyCareResponse {
   int32 room = 1;
   string doctorName = 2;
   string patientName = 3;
