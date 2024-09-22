@@ -15,6 +15,11 @@
       <artifactId>tp1-g5-api</artifactId>
       <version>2024.2Q</version>
     </dependency>
+      <dependency>
+          <groupId>com.opencsv</groupId>
+          <artifactId>opencsv</artifactId>
+          <version>4.4</version>
+      </dependency>
   </dependencies>
   <build>
     <testSourceDirectory>src/test/java</testSourceDirectory>
