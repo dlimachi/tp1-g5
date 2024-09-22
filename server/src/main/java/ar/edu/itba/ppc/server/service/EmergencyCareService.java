@@ -1,8 +1,7 @@
 package ar.edu.itba.ppc.server.service;
 
 import ar.edu.itba.tp1g5.EmergencyCareResponse;
-import ar.edu.itba.tp1g5.EndEmergencyCareRequest;
-import ar.edu.itba.tp1g5.StartEmergencyCareRequest;
+import ar.edu.itba.tp1g5.EmergencyCareRequest;
 import ar.edu.itba.ppc.server.dto.EmeregencyCare;
 import ar.edu.itba.ppc.server.repository.EmergencyAdminRepository;
 import ar.edu.itba.tp1g5.EmergencyCareServiceGrpc;
@@ -16,7 +15,7 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
     }
 
     @Override
-    public void startEmergencyCare(StartEmergencyCareRequest request, StreamObserver<EmergencyCareResponse> responseObserver) {
+    public void startEmergencyCare(EmergencyCareRequest request, StreamObserver<EmergencyCareResponse> responseObserver) {
         EmeregencyCare emeregencyCare = repository.assignRoomToEmergencyCare(request.getRoom());
         EmergencyCareResponse reply = EmergencyCareResponse.newBuilder()
                 .setDoctorName(emeregencyCare.getDoctorName())
@@ -27,7 +26,7 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
     }
 
     @Override
-    public void endEmergencyCare(EndEmergencyCareRequest request, StreamObserver<EmergencyCareResponse> responseObserver) {
+    public void endEmergencyCare(EmergencyCareRequest request, StreamObserver<EmergencyCareResponse> responseObserver) {
         EmeregencyCare emeregencyCare = repository.endEmergencyCare(request.getRoom(), request.getDoctorName(), request.getPatientName());
         EmergencyCareResponse reply = EmergencyCareResponse.newBuilder()
                 .setDoctorName(emeregencyCare.getDoctorName())
