@@ -35,8 +35,8 @@ public class EmergencyAdminClient {
                 .usePlaintext()
                 .build();
 
-        emergencyAdminServiceGrpc.emergencyAdminServiceBlockingStub blockingStub =
-                emergencyAdminServiceGrpc.newBlockingStub(channel);
+        emergencyAdminServiceGrpc.emergencyAdminServiceFutureStub futureStub =
+                emergencyAdminServiceGrpc.newFutureStub(channel);
 
         switch (action) {
             case "addDoctor" -> {
@@ -45,9 +45,22 @@ public class EmergencyAdminClient {
                 latch = new CountDownLatch(1);
                 DoctorRequest addSectorRequest = DoctorRequest.newBuilder()
                         .setDoctorName(doctorName)
-                        .setLevel(level)
+                        .setLevel(Integer.parseInt(level))
                         .build();
-                ListenableFuture<Empty> listenableFuture = blockingStub.addDoctor(addSectorRequest);
+                ListenableFuture<DoctorResponse> listenableFuture = futureStub.addDoctor(addSectorRequest);
+                //Agregar un callback
+            }
+            case "setDoctor" -> {
+                final String doctorName = argMap.get(ClientArgs.DOCTOR.getValue());
+                final String level = argMap.get(ClientArgs.LEVEL.getValue());
+                final String availability = argMap.get(ClientArgs.AVAILABILITY.getValue());
+                latch = new CountDownLatch(1);
+                DoctorRequest addSectorRequest = DoctorRequest.newBuilder()
+                        .setDoctorName(doctorName)
+                        .setLevel(Integer.parseInt(level))
+                        .setAvailability(availability)
+                        .build();
+                ListenableFuture<DoctorResponse> listenableFuture = futureStub.addDoctor(addSectorRequest);
                 //Agregar un callback
             }
         }
