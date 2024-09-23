@@ -4,8 +4,7 @@ import ar.edu.itba.ppc.client.utilsConsole.ClientArgs;
 import ar.edu.itba.tp1g5.DoctorRequest;
 import ar.edu.itba.tp1g5.DoctorResponse;
 import ar.edu.itba.tp1g5.RoomResponse;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
+import ar.edu.itba.tp1g5.emergencyAdminServiceGrpc;
 import com.google.protobuf.Empty;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -15,9 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import ar.edu.itba.tp1g5.emergencyAdminServiceGrpc;
 
-import static ar.edu.itba.ppc.client.utilsConsole.ClientUtils.checkNullArgs;
 import static ar.edu.itba.ppc.client.utilsConsole.ClientUtils.parseArgs;
 
 public class EmergencyAdminClient {
@@ -31,59 +28,39 @@ public class EmergencyAdminClient {
         final String serverAddress = argMap.get(ClientArgs.SERVER_ADDRESS.getValue());
         final String action = argMap.get(ClientArgs.ACTION.getValue());
 
-        ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 50051)
+        ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 50052)
                 .usePlaintext()
                 .build();
 
-        emergencyAdminServiceGrpc.emergencyAdminServiceFutureStub futureStub =
-                emergencyAdminServiceGrpc.newFutureStub(channel);
-
-        switch (action) {
-            case "addDoctor" -> {
-                final String doctorName = argMap.get(ClientArgs.DOCTOR.getValue());
-                final String level = argMap.get(ClientArgs.LEVEL.getValue());
-                latch = new CountDownLatch(1);
-                DoctorRequest addSectorRequest = DoctorRequest.newBuilder()
-                        .setDoctorName(doctorName)
-                        .setLevel(Integer.parseInt(level))
-                        .build();
-                ListenableFuture<DoctorResponse> listenableFuture = futureStub.addDoctor(addSectorRequest);
-                //Agregar un callback
-            }
-            case "setDoctor" -> {
-                final String doctorName = argMap.get(ClientArgs.DOCTOR.getValue());
-                final String level = argMap.get(ClientArgs.LEVEL.getValue());
-                final String availability = argMap.get(ClientArgs.AVAILABILITY.getValue());
-                latch = new CountDownLatch(1);
-                DoctorRequest addSectorRequest = DoctorRequest.newBuilder()
-                        .setDoctorName(doctorName)
-                        .setLevel(Integer.parseInt(level))
-                        .setAvailability(availability)
-                        .build();
-                ListenableFuture<DoctorResponse> listenableFuture = futureStub.addDoctor(addSectorRequest);
-                //Agregar un callback
-            }
-        }
-
         try {
-            /*emergencyAdminServiceGrpc.emergencyAdminServiceBlockingStub blockingStub =
+            emergencyAdminServiceGrpc.emergencyAdminServiceBlockingStub blockingStub =
                     emergencyAdminServiceGrpc.newBlockingStub(channel);
-            RoomResponse reply = blockingStub.addRoom(Empty.newBuilder().build());
+            RoomResponse replyRoom = blockingStub.addRoom(Empty.newBuilder().build());
 
             DoctorRequest request = DoctorRequest.newBuilder()
-                    .setDoctorName("Dr. House")
-                    .setLevel(1)
+                    .setDoctorName("Melisa")
+                    .setLevel(2)
                     .build();
-            DoctorResponse reply2 = blockingStub.addDoctor(request);
+            DoctorResponse reply = blockingStub.addDoctor(request);
 
-            System.out.println(reply.getRoom());
-            System.out.println(reply.getStatus());
-            System.out.println(reply2.getDoctorName());
-            System.out.println(reply2.getLevel());*/
-            logger.info("Waiting for response...");
-            latch.await();
+            DoctorRequest request2 = DoctorRequest.newBuilder()
+                    .setDoctorName("Fede")
+                    .setLevel(3)
+                    .build();
+
+            DoctorResponse reply2 = blockingStub.addDoctor(request2);
+
+
+            System.out.println(String.format("The room %s is %s", replyRoom.getRoom(), replyRoom.getStatus()));
+
+            System.out.println(String.format("Added doctor %s, is %s", reply.getDoctorName(), reply.getAvailability()));
+
+            System.out.println(String.format("Added doctor %s, is %s", reply2.getDoctorName(), reply2.getAvailability()));
+
+
         }
         catch (Exception e) {
+            System.out.println(e.toString());
             logger.error("Error: " + e.getMessage());
             }
         finally {

@@ -14,31 +14,23 @@ public class EmergencyCareClient {
     public static void main(String[] args) throws InterruptedException {
         logger.info("tp1-g5 Client Starting ...");
         logger.info("grpc-com-patterns Client Starting ...");
-        ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 50051)
+        ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 50052)
                 .usePlaintext()
                 .build();
 
         try {
-            EmergencyCareServiceGrpc.EmergencyCareServiceFutureStub futureStub =
-                    EmergencyCareServiceGrpc.newFutureStub(channel);
+            EmergencyCareServiceGrpc.EmergencyCareServiceBlockingStub blockingStub =
+                    EmergencyCareServiceGrpc.newBlockingStub(channel);
 
             EmergencyCareRequest request = EmergencyCareRequest.newBuilder()
                     .setRoom(1)
                     .build();
 
-            EmergencyCareResponse reply = futureStub.startEmergencyCare(request);
-            System.out.println(reply.getRoom());
-            System.out.println(reply.getDoctorName());
+            EmergencyCareResponse reply = blockingStub.startEmergencyCare(request);
+            System.out.println(String.format("Start emergency care in %s with %s", reply.getRoom(), reply.getDoctorName()));
 
-            EmergencyCareRequest request2 = EmergencyCareRequest.newBuilder()
-                    .setRoom(1)
-                    .setDoctorName("Dr. House")
-                    .setPatientName("patient")
-                    .build();
 
-            EmergencyCareResponse reply2 = futureStub.endEmergencyCare(request2);
-            System.out.println(reply2.getRoom());
-            System.out.println(reply2.getDoctorName());
+
 
         }
         catch (Exception e) {
