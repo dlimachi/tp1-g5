@@ -19,14 +19,14 @@ public class EmergencyCareClient {
                 .build();
 
         try {
-            EmergencyCareServiceGrpc.EmergencyCareServiceFutureStub futureStub =
-                    EmergencyCareServiceGrpc.newFutureStub(channel);
+            EmergencyCareServiceGrpc.EmergencyCareServiceBlockingStub blockingStub =
+                    EmergencyCareServiceGrpc.newBlockingStub(channel);
 
             EmergencyCareRequest request = EmergencyCareRequest.newBuilder()
                     .setRoom(1)
                     .build();
 
-            EmergencyCareResponse reply = futureStub.startEmergencyCare(request);
+            EmergencyCareResponse reply = blockingStub.startEmergencyCare(request);
             System.out.println(reply.getRoom());
             System.out.println(reply.getDoctorName());
 
@@ -36,7 +36,7 @@ public class EmergencyCareClient {
                     .setPatientName("patient")
                     .build();
 
-            EmergencyCareResponse reply2 = futureStub.endEmergencyCare(request2);
+            EmergencyCareResponse reply2 = blockingStub.endEmergencyCare(request2);
             System.out.println(reply2.getRoom());
             System.out.println(reply2.getDoctorName());
 
