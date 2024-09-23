@@ -78,34 +78,34 @@ public final class WaitingRoomServiceGrpc {
   }
 
   private static volatile io.grpc.MethodDescriptor<ar.edu.itba.tp1g5.PatientRequest,
-      ar.edu.itba.tp1g5.PatientResponse> getCheckWaitingTimeMethod;
+      ar.edu.itba.tp1g5.PatientResponse> getCheckWaitingListMethod;
 
   @io.grpc.stub.annotations.RpcMethod(
-      fullMethodName = SERVICE_NAME + '/' + "CheckWaitingTime",
+      fullMethodName = SERVICE_NAME + '/' + "CheckWaitingList",
       requestType = ar.edu.itba.tp1g5.PatientRequest.class,
       responseType = ar.edu.itba.tp1g5.PatientResponse.class,
       methodType = io.grpc.MethodDescriptor.MethodType.UNARY)
   public static io.grpc.MethodDescriptor<ar.edu.itba.tp1g5.PatientRequest,
-      ar.edu.itba.tp1g5.PatientResponse> getCheckWaitingTimeMethod() {
-    io.grpc.MethodDescriptor<ar.edu.itba.tp1g5.PatientRequest, ar.edu.itba.tp1g5.PatientResponse> getCheckWaitingTimeMethod;
-    if ((getCheckWaitingTimeMethod = WaitingRoomServiceGrpc.getCheckWaitingTimeMethod) == null) {
+      ar.edu.itba.tp1g5.PatientResponse> getCheckWaitingListMethod() {
+    io.grpc.MethodDescriptor<ar.edu.itba.tp1g5.PatientRequest, ar.edu.itba.tp1g5.PatientResponse> getCheckWaitingListMethod;
+    if ((getCheckWaitingListMethod = WaitingRoomServiceGrpc.getCheckWaitingListMethod) == null) {
       synchronized (WaitingRoomServiceGrpc.class) {
-        if ((getCheckWaitingTimeMethod = WaitingRoomServiceGrpc.getCheckWaitingTimeMethod) == null) {
-          WaitingRoomServiceGrpc.getCheckWaitingTimeMethod = getCheckWaitingTimeMethod =
+        if ((getCheckWaitingListMethod = WaitingRoomServiceGrpc.getCheckWaitingListMethod) == null) {
+          WaitingRoomServiceGrpc.getCheckWaitingListMethod = getCheckWaitingListMethod =
               io.grpc.MethodDescriptor.<ar.edu.itba.tp1g5.PatientRequest, ar.edu.itba.tp1g5.PatientResponse>newBuilder()
               .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
-              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "CheckWaitingTime"))
+              .setFullMethodName(generateFullMethodName(SERVICE_NAME, "CheckWaitingList"))
               .setSampledToLocalTracing(true)
               .setRequestMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
                   ar.edu.itba.tp1g5.PatientRequest.getDefaultInstance()))
               .setResponseMarshaller(io.grpc.protobuf.ProtoUtils.marshaller(
                   ar.edu.itba.tp1g5.PatientResponse.getDefaultInstance()))
-              .setSchemaDescriptor(new WaitingRoomServiceMethodDescriptorSupplier("CheckWaitingTime"))
+              .setSchemaDescriptor(new WaitingRoomServiceMethodDescriptorSupplier("CheckWaitingList"))
               .build();
         }
       }
     }
-    return getCheckWaitingTimeMethod;
+    return getCheckWaitingListMethod;
   }
 
   /**
@@ -172,9 +172,9 @@ public final class WaitingRoomServiceGrpc {
 
     /**
      */
-    default void checkWaitingTime(ar.edu.itba.tp1g5.PatientRequest request,
+    default void checkWaitingList(ar.edu.itba.tp1g5.PatientRequest request,
         io.grpc.stub.StreamObserver<ar.edu.itba.tp1g5.PatientResponse> responseObserver) {
-      io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getCheckWaitingTimeMethod(), responseObserver);
+      io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall(getCheckWaitingListMethod(), responseObserver);
     }
   }
 
@@ -223,10 +223,10 @@ public final class WaitingRoomServiceGrpc {
 
     /**
      */
-    public void checkWaitingTime(ar.edu.itba.tp1g5.PatientRequest request,
+    public void checkWaitingList(ar.edu.itba.tp1g5.PatientRequest request,
         io.grpc.stub.StreamObserver<ar.edu.itba.tp1g5.PatientResponse> responseObserver) {
       io.grpc.stub.ClientCalls.asyncUnaryCall(
-          getChannel().newCall(getCheckWaitingTimeMethod(), getCallOptions()), request, responseObserver);
+          getChannel().newCall(getCheckWaitingListMethod(), getCallOptions()), request, responseObserver);
     }
   }
 
@@ -262,9 +262,9 @@ public final class WaitingRoomServiceGrpc {
 
     /**
      */
-    public ar.edu.itba.tp1g5.PatientResponse checkWaitingTime(ar.edu.itba.tp1g5.PatientRequest request) {
+    public ar.edu.itba.tp1g5.PatientResponse checkWaitingList(ar.edu.itba.tp1g5.PatientRequest request) {
       return io.grpc.stub.ClientCalls.blockingUnaryCall(
-          getChannel(), getCheckWaitingTimeMethod(), getCallOptions(), request);
+          getChannel(), getCheckWaitingListMethod(), getCallOptions(), request);
     }
   }
 
@@ -302,16 +302,16 @@ public final class WaitingRoomServiceGrpc {
 
     /**
      */
-    public com.google.common.util.concurrent.ListenableFuture<ar.edu.itba.tp1g5.PatientResponse> checkWaitingTime(
+    public com.google.common.util.concurrent.ListenableFuture<ar.edu.itba.tp1g5.PatientResponse> checkWaitingList(
         ar.edu.itba.tp1g5.PatientRequest request) {
       return io.grpc.stub.ClientCalls.futureUnaryCall(
-          getChannel().newCall(getCheckWaitingTimeMethod(), getCallOptions()), request);
+          getChannel().newCall(getCheckWaitingListMethod(), getCallOptions()), request);
     }
   }
 
   private static final int METHODID_REGISTER_PATIENT = 0;
   private static final int METHODID_UPDATE_EMERGENCY_LEVEL = 1;
-  private static final int METHODID_CHECK_WAITING_TIME = 2;
+  private static final int METHODID_CHECK_WAITING_LIST = 2;
 
   private static final class MethodHandlers<Req, Resp> implements
       io.grpc.stub.ServerCalls.UnaryMethod<Req, Resp>,
@@ -338,8 +338,8 @@ public final class WaitingRoomServiceGrpc {
           serviceImpl.updateEmergencyLevel((ar.edu.itba.tp1g5.PatientRequest) request,
               (io.grpc.stub.StreamObserver<ar.edu.itba.tp1g5.PatientResponse>) responseObserver);
           break;
-        case METHODID_CHECK_WAITING_TIME:
-          serviceImpl.checkWaitingTime((ar.edu.itba.tp1g5.PatientRequest) request,
+        case METHODID_CHECK_WAITING_LIST:
+          serviceImpl.checkWaitingList((ar.edu.itba.tp1g5.PatientRequest) request,
               (io.grpc.stub.StreamObserver<ar.edu.itba.tp1g5.PatientResponse>) responseObserver);
           break;
         default:
@@ -375,12 +375,12 @@ public final class WaitingRoomServiceGrpc {
               ar.edu.itba.tp1g5.PatientResponse>(
                 service, METHODID_UPDATE_EMERGENCY_LEVEL)))
         .addMethod(
-          getCheckWaitingTimeMethod(),
+          getCheckWaitingListMethod(),
           io.grpc.stub.ServerCalls.asyncUnaryCall(
             new MethodHandlers<
               ar.edu.itba.tp1g5.PatientRequest,
               ar.edu.itba.tp1g5.PatientResponse>(
-                service, METHODID_CHECK_WAITING_TIME)))
+                service, METHODID_CHECK_WAITING_LIST)))
         .build();
   }
 
@@ -431,7 +431,7 @@ public final class WaitingRoomServiceGrpc {
               .setSchemaDescriptor(new WaitingRoomServiceFileDescriptorSupplier())
               .addMethod(getRegisterPatientMethod())
               .addMethod(getUpdateEmergencyLevelMethod())
-              .addMethod(getCheckWaitingTimeMethod())
+              .addMethod(getCheckWaitingListMethod())
               .build();
         }
       }

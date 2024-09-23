@@ -42,7 +42,7 @@ public final class WaitingRoomServiceModel {
       "ientRequest\032\034.waitingroom.PatientRespons" +
       "e\022Q\n\024UpdateEmergencyLevel\022\033.waitingroom." +
       "PatientRequest\032\034.waitingroom.PatientResp" +
-      "onse\022M\n\020CheckWaitingTime\022\033.waitingroom.P" +
+      "onse\022M\n\020CheckWaitingList\022\033.waitingroom.P" +
       "atientRequest\032\034.waitingroom.PatientRespo" +
       "nseB.\n\021ar.edu.itba.tp1g5B\027WaitingRoomSer" +
       "viceModelP\001b\006proto3"

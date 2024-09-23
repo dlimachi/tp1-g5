@@ -9,7 +9,7 @@ option java_multiple_files = true;
 service WaitingRoomService {
   rpc RegisterPatient(PatientRequest) returns (PatientResponse);
   rpc UpdateEmergencyLevel(PatientRequest) returns (PatientResponse);
-  rpc CheckWaitingTime(PatientRequest) returns (PatientResponse);
+  rpc CheckWaitingList(PatientRequest) returns (PatientResponse);
 }
 
 message PatientRequest {
