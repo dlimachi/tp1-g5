@@ -28,25 +28,35 @@ public class EmergencyAdminClient {
         final String serverAddress = argMap.get(ClientArgs.SERVER_ADDRESS.getValue());
         final String action = argMap.get(ClientArgs.ACTION.getValue());
 
-        ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 50051)
+        ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 50052)
                 .usePlaintext()
                 .build();
 
         try {
             emergencyAdminServiceGrpc.emergencyAdminServiceBlockingStub blockingStub =
                     emergencyAdminServiceGrpc.newBlockingStub(channel);
-            RoomResponse reply = blockingStub.addRoom(Empty.newBuilder().build());
+            RoomResponse replyRoom = blockingStub.addRoom(Empty.newBuilder().build());
 
             DoctorRequest request = DoctorRequest.newBuilder()
-                    .setDoctorName("Dr. House")
-                    .setLevel(1)
+                    .setDoctorName("Melisa")
+                    .setLevel(2)
                     .build();
-            DoctorResponse reply2 = blockingStub.addDoctor(request);
+            DoctorResponse reply = blockingStub.addDoctor(request);
 
-            System.out.println(reply.getRoom());
-            System.out.println(reply.getStatus());
-            System.out.println(reply2.getDoctorName());
-            System.out.println(reply2.getLevel());
+            DoctorRequest request2 = DoctorRequest.newBuilder()
+                    .setDoctorName("Fede")
+                    .setLevel(3)
+                    .build();
+
+            DoctorResponse reply2 = blockingStub.addDoctor(request2);
+
+
+            System.out.println(String.format("The room %s is %s", replyRoom.getRoom(), replyRoom.getStatus()));
+
+            System.out.println(String.format("Added doctor %s, is %s", reply.getDoctorName(), reply.getAvailability()));
+
+            System.out.println(String.format("Added doctor %s, is %s", reply2.getDoctorName(), reply2.getAvailability()));
+
 
         }
         catch (Exception e) {
