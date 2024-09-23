@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package waitingroom;
+
+option java_package = "ar.edu.itba.tp1g5";
+option java_outer_classname = "WaitingRoomServiceModel";
+option java_multiple_files = true;
+
+service WaitingRoomService {
+  rpc RegisterPatient(PatientRequest) returns (PatientResponse);
+  rpc UpdateEmergencyLevel(PatientRequest) returns (PatientResponse);
+  rpc CheckWaitingTime(PatientRequest) returns (PatientResponse);
+}
+
+message PatientRequest {
+  string patientName = 1;
+  int32 level = 2;
+}
+
+message PatientResponse {
+  string patientName = 1;
+  int32 level = 2;
+  int32 waitingPatient = 3;
+}
+
