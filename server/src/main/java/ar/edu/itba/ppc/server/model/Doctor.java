@@ -1,12 +1,7 @@
 package ar.edu.itba.ppc.server.model;
 
 
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-
 public class Doctor {
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
-
     String doctorName;
     Integer level;
     String availability;
@@ -51,11 +46,4 @@ public class Doctor {
         this.availability = availability;
     }
 
-    public void lockWriting() {
-        lock.writeLock().lock();
-    }
-
-    public void unlockWriting() {
-        lock.writeLock().unlock();
-    }
 }

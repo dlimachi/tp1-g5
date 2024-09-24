@@ -49,17 +49,9 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
         Doctor doctor = availableDoctor.get();
         Room room = roomRepository.getRooms().get(roomId);
 
-        doctor.lockWriting();
-        room.lockWriting();
-        try {
-            room.setStatus(Availabilities.ATTENDING.getValue());
+        room.setStatus(Availabilities.ATTENDING.getValue());
             doctor.setRoom(roomId.toString());
             doctor.setAvailability(Availabilities.ATTENDING.getValue());
-        }
-        finally {
-            doctor.unlockWriting();
-            room.unlockWriting();
-        }
 
         EmergencyCareResponse reply = EmergencyCareResponse.newBuilder()
                 .setDoctorName(doctor.getDoctorName())
@@ -86,18 +78,9 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
             throw new DoctorNotAssignedToRoomException(doctorName, room);
         }
 
-        attendingDoctor.lockWriting();
-        attendingRoom.lockWriting();
-
-        try {
-            attendingRoom.setStatus(Availabilities.AVAILABLE.getValue());
-            attendingDoctor.setAvailability(Availabilities.AVAILABLE.getValue());
-            attendingDoctor.setRoom(null);
-        }
-        finally {
-            attendingDoctor.unlockWriting();
-            attendingRoom.unlockWriting();
-        }
+        attendingRoom.setStatus(Availabilities.AVAILABLE.getValue());
+        attendingDoctor.setAvailability(Availabilities.AVAILABLE.getValue());
+        attendingDoctor.setRoom(null);
 
         EmergencyCareResponse reply = EmergencyCareResponse.newBuilder()
                 .setDoctorName(doctorName)
