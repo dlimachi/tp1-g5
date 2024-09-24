@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package waitingroom;
+package administration;
 
 option java_package = "ar.edu.itba.tp1g5";
 option java_outer_classname = "WaitingRoomServiceModel";

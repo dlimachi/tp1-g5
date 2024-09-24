@@ -1,7 +1,7 @@
 package ar.edu.itba.ppc.server.service;
 
-import ar.edu.itba.ppc.server.repository.PatientRepository;
 import ar.edu.itba.ppc.server.model.Patient;
+import ar.edu.itba.ppc.server.repository.PatientRepository;
 import ar.edu.itba.tp1g5.PatientRequest;
 import ar.edu.itba.tp1g5.PatientResponse;
 import ar.edu.itba.tp1g5.WaitingRoomServiceGrpc;
@@ -20,28 +20,17 @@ public class WaitingRoomService extends WaitingRoomServiceGrpc.WaitingRoomServic
         String name = request.getPatientName();
         int level = request.getLevel();
 
-        if (level < 1 || level > 5) {
-            responseObserver.onError(Status.INVALID_ARGUMENT
-                    .withDescription("Invalid emergency level. Must be between 1 and 5.")
-                    .asRuntimeException());
-            return;
+        boolean created = patientRepository.addPatient(new Patient(request.getPatientName(), request.getLevel()));
+
+        if(created) {
+            PatientResponse response = PatientResponse.newBuilder()
+                    .setPatientName(name)
+                    .setLevel(level)
+                    .build();
+
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
         }
-
-        Patient patient = new Patient(name, level);
-        if (!patientRepository.addPatient(patient)) {
-            responseObserver.onError(Status.ALREADY_EXISTS
-                    .withDescription("Patient already exists in the waiting room or is being attended.")
-                    .asRuntimeException());
-            return;
-        }
-
-        PatientResponse response = PatientResponse.newBuilder()
-                .setPatientName(name)
-                .setLevel(level)
-                .build();
-
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
     }
 
     @Override
@@ -88,6 +77,7 @@ public class WaitingRoomService extends WaitingRoomServiceGrpc.WaitingRoomServic
 
         PatientResponse response = PatientResponse.newBuilder()
                 .setPatientName(name)
+                .setLevel(patient.getEmergencyLevel())
                 .setWaitingPatient(patientsAhead)
                 .build();
 
