@@ -4,6 +4,7 @@ import ar.edu.itba.ppc.server.model.Patient;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -93,16 +94,15 @@ public class PatientRepository {
         }
     }
 
-    /**
-     * Obtiene todos los pacientes.
-     * Usa un read lock para asegurar una vista consistente de todos los pacientes.
-     */
-    public List<Patient> getAllPatients() {
-        rwLock.readLock().lock();
-        try {
-            return new ArrayList<>(patients.values());
-        } finally {
-            rwLock.readLock().unlock();
-        }
+    public List<Patient> getWaitingPatientsInOrder() {
+        return patients.values().stream().sorted(Comparator
+                .comparing(Patient::getEmergencyLevel).reversed()
+                .thenComparing(Patient::getArrivalTime))
+                //.filter(patient -> patient.getStatus().equals("waiting"))
+                .toList();
+    }
+
+    public Map<String, Patient> getPatients() {
+        return patients;
     }
 }
