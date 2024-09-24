@@ -2,9 +2,11 @@ package ar.edu.itba.ppc.server;
 
 import ar.edu.itba.ppc.server.exceptions.GlobalExceptionHandlerInterceptor;
 import ar.edu.itba.ppc.server.repository.DoctorRepository;
+import ar.edu.itba.ppc.server.repository.PatientRepository;
 import ar.edu.itba.ppc.server.repository.RoomRepository;
 import ar.edu.itba.ppc.server.service.EmergencyAdminService;
 import ar.edu.itba.ppc.server.service.EmergencyCareService;
+import ar.edu.itba.ppc.server.service.WaitingRoomService;
 import io.grpc.ServerBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +25,7 @@ public class Server {
         io.grpc.Server server = ServerBuilder.forPort(port)
                 .addService(new EmergencyAdminService(repository, roomRepository))
                 .addService(new EmergencyCareService(repository, roomRepository))
+                .addService(new WaitingRoomService(new PatientRepository()))
                 .intercept(new GlobalExceptionHandlerInterceptor())
                 .build();
         server.start();
