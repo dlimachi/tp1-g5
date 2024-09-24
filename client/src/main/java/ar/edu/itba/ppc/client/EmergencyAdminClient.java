@@ -3,10 +3,7 @@ package ar.edu.itba.ppc.client;
 import ar.edu.itba.ppc.client.utilsConsole.ClientArgs;
 import ar.edu.itba.tp1g5.DoctorRequest;
 import ar.edu.itba.tp1g5.DoctorResponse;
-import ar.edu.itba.tp1g5.RoomResponse;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.protobuf.Empty;
+import ar.edu.itba.tp1g5.emergencyAdminServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.slf4j.Logger;
@@ -15,9 +12,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import ar.edu.itba.tp1g5.emergencyAdminServiceGrpc;
 
-import static ar.edu.itba.ppc.client.utilsConsole.ClientUtils.checkNullArgs;
 import static ar.edu.itba.ppc.client.utilsConsole.ClientUtils.parseArgs;
 
 public class EmergencyAdminClient {
@@ -31,12 +26,12 @@ public class EmergencyAdminClient {
         final String serverAddress = argMap.get(ClientArgs.SERVER_ADDRESS.getValue());
         final String action = argMap.get(ClientArgs.ACTION.getValue());
 
-        ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 50051)
+        ManagedChannel channel = ManagedChannelBuilder.forTarget(serverAddress)
                 .usePlaintext()
                 .build();
 
-        emergencyAdminServiceGrpc.emergencyAdminServiceFutureStub futureStub =
-                emergencyAdminServiceGrpc.newFutureStub(channel);
+        emergencyAdminServiceGrpc.emergencyAdminServiceBlockingStub blockingStub =
+                emergencyAdminServiceGrpc.newBlockingStub(channel);
 
         switch (action) {
             case "addDoctor" -> {
@@ -47,8 +42,9 @@ public class EmergencyAdminClient {
                         .setDoctorName(doctorName)
                         .setLevel(Integer.parseInt(level))
                         .build();
-                ListenableFuture<DoctorResponse> listenableFuture = futureStub.addDoctor(addSectorRequest);
-                //Agregar un callback
+                DoctorResponse response = blockingStub.addDoctor(addSectorRequest);
+                System.out.println(String.format("Doctor %s (%d) added successfully",
+                        response.getDoctorName(), response.getLevel()));
             }
             case "setDoctor" -> {
                 final String doctorName = argMap.get(ClientArgs.DOCTOR.getValue());
@@ -60,8 +56,9 @@ public class EmergencyAdminClient {
                         .setLevel(Integer.parseInt(level))
                         .setAvailability(availability)
                         .build();
-                ListenableFuture<DoctorResponse> listenableFuture = futureStub.addDoctor(addSectorRequest);
-                //Agregar un callback
+                DoctorResponse response = blockingStub.addDoctor(addSectorRequest);
+                System.out.println(String.format("Doctor %s (%d) is %s",
+                        response.getDoctorName(), response.getLevel(), response.getAvailability()));
             }
         }
 

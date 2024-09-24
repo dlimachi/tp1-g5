@@ -19,8 +19,8 @@ public class EmergencyCareClient {
                 .build();
 
         try {
-            EmergencyCareServiceGrpc.EmergencyCareServiceFutureStub futureStub =
-                    EmergencyCareServiceGrpc.newFutureStub(channel);
+            EmergencyCareServiceGrpc.EmergencyCareServiceBlockingStub futureStub =
+                    EmergencyCareServiceGrpc.newBlockingStub(channel);
 
             EmergencyCareRequest request = EmergencyCareRequest.newBuilder()
                     .setRoom(1)
