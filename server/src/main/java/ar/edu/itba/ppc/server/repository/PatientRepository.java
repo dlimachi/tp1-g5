@@ -89,4 +89,13 @@ public class PatientRepository {
     public Patient getPatient(String name) {
         return patients.get(name);
     }
+
+    public Patient getUrgentPatient() {
+        return patients.values().stream()
+                .filter(p -> p.getStatus().equals(StatusPatient.WAITING.getValue()))
+                .sorted(Comparator.comparing(Patient::getEmergencyLevel).reversed()
+                        .thenComparing(Patient::getArrivalTime))
+                .findFirst()
+                .orElse(null);
+    }
 }
