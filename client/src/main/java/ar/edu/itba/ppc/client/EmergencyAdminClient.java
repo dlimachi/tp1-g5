@@ -88,11 +88,13 @@ public class EmergencyAdminClient {
                     if(Objects.nonNull(checkResponse))
                         logger.info("Doctor {} ({}) is {}", checkResponse.getDoctorName(), checkResponse.getLevel(), checkResponse.getAvailability());
                     break;
+                default:
+                    logger.error("Unknown action: " + action);
             }
             //latch.await();
 
     } catch (StatusRuntimeException e) {
-        logger.error("gRPC failed: {}", e.getStatus());
+        logger.error("gRPC failed: {}", e.getStatus().getDescription());
     } catch (Exception e) {
         logger.error("Unexpected error: ", e);
     } finally {

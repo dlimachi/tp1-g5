@@ -7,6 +7,7 @@ import ar.edu.itba.ppc.client.utilsConsole.CreateQuerys;
 import ar.edu.itba.tp1g5.*;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.StatusRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +65,11 @@ public class QueryClient {
                         ClientUtils.getCSVData(outPath);
                     }
                 }
+                default -> logger.error("Unknown action: " + action);
             }
+        }
+        catch (StatusRuntimeException e) {
+            logger.error("gRPC failed: {}", e.getStatus());
         }
         catch (Exception e) {
             logger.error("Error: " + e.getMessage());

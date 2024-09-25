@@ -81,9 +81,10 @@ public class EmergencyCareClient {
                                 response.getPatientName(), response.getPatientLevel(), response.getDoctorName(), response.getDoctorLevel(), response.getRoom(), response.getRoomStatus());
                     }
                 }
+                default -> logger.error("Unknown action: " + action);
             }
         } catch (StatusRuntimeException e) {
-            logger.error("gRPC failed: {}", e.getStatus());
+            logger.error("gRPC failed: {}", e.getStatus().getDescription());
         } catch (Exception e) {
             logger.error("Unexpected error: ", e);
         } finally {
