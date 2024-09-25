@@ -44,4 +44,12 @@ public class DoctorRepository {
         return doctors;
     }
 
+    public Doctor getAvailableDoctor() {
+        return doctors.values().stream()
+                .filter(doctor -> doctor.getAvailability().equals(AvailabilityDoctor.AVAILABLE.getValue()))
+                .min(Comparator.comparing(Doctor::getLevel)
+                        .thenComparing(Doctor::getDoctorName))
+                .orElse(null);
+    }
+
 }
