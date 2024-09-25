@@ -41,8 +41,8 @@ public class EmergencyCareClient {
                         .setRoom(Integer.parseInt(room))
                         .build();
                 EmergencyCareResponse response = blockingStub.startEmergencyCare(request);
-                System.out.println(String.format("Patient %d and Doctor %s are now in Room #$d",
-                        response.getPatientName(), response.getDoctorName(), response.getRoom()));
+                System.out.println(String.format("Patient %s (%d) and Doctor %s (%d) are now in Room #$d",
+                        response.getPatientName(), response.getPatientLevel(), response.getDoctorName(), response.getDoctorLevel(), response.getRoom()));
             }
             case "dischargePatient" -> {
                 final String room = argMap.get(ClientArgs.ROOM.getValue());
@@ -55,8 +55,8 @@ public class EmergencyCareClient {
                         .setPatientName(patientName)
                         .build();
                 EmergencyCareResponse response = blockingStub.endEmergencyCare(request);
-                System.out.println(String.format("Patient %d has been discharged from Doctor %s and the Room #$d is now Free",
-                        response.getPatientName(), response.getDoctorName(), response.getRoom()));
+                System.out.println(String.format("Patient %d (%d) has been discharged from Doctor %s (%d) and the Room #$d is now %d",
+                        response.getPatientName(), response.getPatientLevel(), response.getDoctorName(), response.getDoctorLevel(), response.getRoom(), response.getRoomStatus()));
             }
         }
 
