@@ -1,8 +1,5 @@
 syntax = "proto3";
 
-import "google/protobuf/wrappers.proto";
-import "google/protobuf/empty.proto";
-
 package administration;
 
 option java_package = "ar.edu.itba.tp1g5";

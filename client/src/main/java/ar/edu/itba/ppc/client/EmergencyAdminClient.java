@@ -90,12 +90,13 @@ public class EmergencyAdminClient {
 //            System.out.println(reply2.getLevel());
 //            logger.info("Waiting for response...");
 //            latch.await();
+            latch.await();
         }
         catch (RuntimeException e) {
             logger.error("Error: " + e.getMessage());
         }
         finally {
-            channel.shutdown().awaitTermination(10, TimeUnit.SECONDS);
+            channel.shutdown().awaitTermination(1000, TimeUnit.SECONDS);
         }
     }
 }

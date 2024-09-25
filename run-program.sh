@@ -20,6 +20,6 @@ rm "tp1-g5-server-2024.2Q-bin.tar.gz"
 
 # Client
 tar -xzf "tp1-g5-client-2024.2Q-bin.tar.gz"
-chmod +x tp1-g5-client-2024.2Q/*-client.sh
+chmod +x tp1-g5-client-2024.2Q/*Client.sh
 sed -i -e 's/\r$//' tp1-g5-client-2024.2Q/*.sh
 rm "tp1-g5-client-2024.2Q-bin.tar.gz"
