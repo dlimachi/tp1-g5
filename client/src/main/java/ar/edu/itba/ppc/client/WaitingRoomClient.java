@@ -6,12 +6,13 @@ import ar.edu.itba.tp1g5.PatientResponse;
 import ar.edu.itba.tp1g5.WaitingRoomServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import static ar.edu.itba.ppc.client.utilsConsole.ClientUtils.parseArgs;
@@ -29,7 +30,7 @@ public class WaitingRoomClient {
         final String patient = argMap.get("patient");
         final String levelStr = argMap.get("level");
 
-        if (serverAddress == null || action == null) {
+        if (serverAddress == null || action == null || patient == null ) {
             logger.error("Missing required arguments. Usage: -DserverAddress=<address> -Daction=<action> -Dpatient=<name> [-Dlevel=<level>]");
             return;
         }
@@ -52,35 +53,46 @@ public class WaitingRoomClient {
 
             switch (action) {
                 case "addPatient":
-                    if (patient == null || levelStr == null) {
+                    if (levelStr == null) {
                         logger.error("Patient name and level are required for addPatient action");
                         return;
                     }
-                    addPatient(blockingStub, patient, Integer.parseInt(levelStr));
+                    PatientRequest addRequest = PatientRequest.newBuilder()
+                            .setPatientName(patient)
+                            .setLevel(Integer.parseInt(levelStr))
+                            .build();
+                    PatientResponse addResponse = executeHandling(() -> blockingStub.registerPatient(addRequest));
+                    if(Objects.nonNull(addResponse))
+                        logger.info("Patient {} added with emergency level {}", addResponse.getPatientName(), addResponse.getLevel());
                     break;
                 case "updateLevel":
-                    if (patient == null || levelStr == null) {
-                        logger.error("Patient name and new level are required for updateLevel action");
+                    if (levelStr == null) {
+                        logger.error("Patient name and level are required for addPatient action");
                         return;
                     }
-                    updateLevel(blockingStub, patient, Integer.parseInt(levelStr));
+                    PatientRequest updateRequest = PatientRequest.newBuilder()
+                            .setPatientName(patient)
+                            .setLevel(Integer.parseInt(levelStr))
+                            .build();
+                    PatientResponse updateResponse = executeHandling(() -> blockingStub.updateEmergencyLevel(updateRequest));
+                    if(Objects.nonNull(updateResponse))
+                        logger.info("Updated emergency level for patient {} to {}", updateResponse.getPatientName(), updateResponse.getLevel());
                     break;
                 case "checkPatient":
-                    if (patient == null) {
-                        logger.error("Patient name is required for checkPatient action");
-                        return;
-                    }
-                    if (levelStr != null) {
-                        logger.error("Level should not be provided for checkPatient action");
-                        return;
-                    }
-                    checkPatient(blockingStub, patient);
+                    PatientRequest checkRequest = PatientRequest.newBuilder()
+                            .setPatientName(patient)
+                            .build();
+
+                    PatientResponse checkResponse = blockingStub.checkWaitingList(checkRequest);
+                    if(Objects.nonNull(checkResponse))
+                        logger.info("Patient {} ({}) is in the waiting room with {} patients ahead",
+                            checkResponse.getPatientName(), checkResponse.getLevel(), checkResponse.getWaitingPatient());
                     break;
                 default:
                     logger.error("Unknown action: " + action);
             }
         } catch (StatusRuntimeException e) {
-            logger.error("RPC failed: {}", e.getStatus());
+            logger.error("gRPC failed: {}", e.getStatus());
         } catch (Exception e) {
             logger.error("Unexpected error: ", e);
         } finally {
@@ -88,54 +100,16 @@ public class WaitingRoomClient {
         }
     }
 
-    private static void addPatient(WaitingRoomServiceGrpc.WaitingRoomServiceBlockingStub stub, String patient, int level) {
-        PatientRequest request = PatientRequest.newBuilder()
-                .setPatientName(patient)
-                .setLevel(level)
-                .build();
+    public static <T> T executeHandling(Callable<T> callable) {
         try {
-            PatientResponse response = stub.registerPatient(request);
-            logger.info("Patient {} added with emergency level {}", response.getPatientName(), response.getLevel());
+            return callable.call();
         } catch (StatusRuntimeException e) {
-            if (e.getStatus().getCode() == Status.Code.ALREADY_EXISTS) {
-                logger.error("Patient {} already exists in the waiting room", patient);
-            } else {
-                logger.error("Failed to add patient: {}", e.getStatus().getDescription());
-            }
+            logger.error(e.getStatus().getDescription());
+            return null;
         }
-    }
-
-    private static void updateLevel(WaitingRoomServiceGrpc.WaitingRoomServiceBlockingStub stub, String patient, int newLevel) {
-        PatientRequest request = PatientRequest.newBuilder()
-                .setPatientName(patient)
-                .setLevel(newLevel)
-                .build();
-        try {
-            PatientResponse response = stub.updateEmergencyLevel(request);
-            logger.info("Updated emergency level for patient {} to {}", response.getPatientName(), response.getLevel());
-        } catch (StatusRuntimeException e) {
-            if (e.getStatus().getCode() == Status.Code.NOT_FOUND) {
-                logger.error("Patient {} not found in the waiting room", patient);
-            } else {
-                logger.error("Failed to update emergency level: {}", e.getStatus().getDescription());
-            }
-        }
-    }
-
-    private static void checkPatient(WaitingRoomServiceGrpc.WaitingRoomServiceBlockingStub stub, String patient) {
-        PatientRequest request = PatientRequest.newBuilder()
-                .setPatientName(patient)
-                .build();
-        try {
-            PatientResponse response = stub.checkWaitingList(request);
-            System.out.printf("Patient %s (%d) is in the waiting room with %d patients ahead%n",
-                    response.getPatientName(), response.getLevel(), response.getWaitingPatient());
-        } catch (StatusRuntimeException e) {
-            if (e.getStatus().getCode() == Status.Code.NOT_FOUND) {
-                logger.error("Patient {} not found in the waiting room", patient);
-            } else {
-                logger.error("Failed to check patient: {}", e.getStatus().getDescription());
-            }
+        catch (Exception e) {
+            logger.error(e.getMessage());
+            return null;
         }
     }
 }

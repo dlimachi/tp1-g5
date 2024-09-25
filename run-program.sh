@@ -4,7 +4,7 @@ target_dir="server/target"
 client_dir="client/target"
 temp_dir="tmp"
 
-mvn clean package
+mvn clean install
 
 mkdir -p "$temp_dir"
 
