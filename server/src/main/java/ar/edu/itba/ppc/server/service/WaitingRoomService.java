@@ -28,7 +28,7 @@ public class WaitingRoomService extends WaitingRoomServiceGrpc.WaitingRoomServic
             return;
         }
 
-        Patient createdPatient = patientRepository.addPatient(name,level);
+        Patient createdPatient = patientRepository.addPatient(name, level);
 
         if (createdPatient != null) {
             PatientResponse response = PatientResponse.newBuilder()
@@ -77,7 +77,7 @@ public class WaitingRoomService extends WaitingRoomServiceGrpc.WaitingRoomServic
     @Override
     public void checkWaitingList(PatientRequest request, StreamObserver<PatientResponse> responseObserver) {
         String name = request.getPatientName();
-        Patient patient = patientRepository.getPatients().get(name);
+        Patient patient = patientRepository.getPatient(name);
 
         if (patient == null) {
             responseObserver.onError(Status.NOT_FOUND
@@ -85,12 +85,22 @@ public class WaitingRoomService extends WaitingRoomServiceGrpc.WaitingRoomServic
                     .asRuntimeException());
             return;
         }
-        int patientsAhead = patientRepository.getPatientsAhead(name);
+
+        Integer patientsAhead = patientRepository.getPatientsAhead(name);
+
+        if (patientsAhead == null) {
+            responseObserver.onError(Status.INTERNAL
+                    .withDescription("Error calculating patients ahead.")
+                    .asRuntimeException());
+            return;
+        }
+
         PatientResponse response = PatientResponse.newBuilder()
                 .setPatientName(name)
                 .setLevel(patient.getEmergencyLevel())
                 .setWaitingPatient(patientsAhead)
                 .build();
+
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }

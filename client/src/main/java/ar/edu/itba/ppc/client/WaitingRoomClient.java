@@ -26,8 +26,8 @@ public class WaitingRoomClient {
         Map<String, String> argMap = parseArgs(args);
         final String serverAddress = argMap.get(ClientArgs.SERVER_ADDRESS.getValue());
         final String action = argMap.get(ClientArgs.ACTION.getValue());
-        final String patient = argMap.get(ClientArgs.PATIENT.getValue());
-        final String levelStr = argMap.get(ClientArgs.LEVEL.getValue());
+        final String patient = argMap.get("patient");
+        final String levelStr = argMap.get("level");
 
         if (serverAddress == null || action == null) {
             logger.error("Missing required arguments. Usage: -DserverAddress=<address> -Daction=<action> -Dpatient=<name> [-Dlevel=<level>]");
@@ -70,6 +70,10 @@ public class WaitingRoomClient {
                         logger.error("Patient name is required for checkPatient action");
                         return;
                     }
+                    if (levelStr != null) {
+                        logger.error("Level should not be provided for checkPatient action");
+                        return;
+                    }
                     checkPatient(blockingStub, patient);
                     break;
                 default:
@@ -94,7 +98,7 @@ public class WaitingRoomClient {
             logger.info("Patient {} added with emergency level {}", response.getPatientName(), response.getLevel());
         } catch (StatusRuntimeException e) {
             if (e.getStatus().getCode() == Status.Code.ALREADY_EXISTS) {
-                logger.error(e.getMessage());
+                logger.error("Patient {} already exists in the waiting room", patient);
             } else {
                 logger.error("Failed to add patient: {}", e.getStatus().getDescription());
             }
@@ -110,7 +114,11 @@ public class WaitingRoomClient {
             PatientResponse response = stub.updateEmergencyLevel(request);
             logger.info("Updated emergency level for patient {} to {}", response.getPatientName(), response.getLevel());
         } catch (StatusRuntimeException e) {
-            logger.error("Failed to update emergency level: {}", e.getStatus().getDescription());
+            if (e.getStatus().getCode() == Status.Code.NOT_FOUND) {
+                logger.error("Patient {} not found in the waiting room", patient);
+            } else {
+                logger.error("Failed to update emergency level: {}", e.getStatus().getDescription());
+            }
         }
     }
 
@@ -120,10 +128,14 @@ public class WaitingRoomClient {
                 .build();
         try {
             PatientResponse response = stub.checkWaitingList(request);
-            logger.info("Patient {} is in the waiting room with emergency level {} and {} patients ahead",
+            System.out.printf("Patient %s (%d) is in the waiting room with %d patients ahead%n",
                     response.getPatientName(), response.getLevel(), response.getWaitingPatient());
         } catch (StatusRuntimeException e) {
-            logger.error("Failed to check patient: {}", e.getStatus().getDescription());
+            if (e.getStatus().getCode() == Status.Code.NOT_FOUND) {
+                logger.error("Patient {} not found in the waiting room", patient);
+            } else {
+                logger.error("Failed to check patient: {}", e.getStatus().getDescription());
+            }
         }
     }
 }

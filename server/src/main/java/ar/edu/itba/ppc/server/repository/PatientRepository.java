@@ -65,17 +65,20 @@ public class PatientRepository {
                 return null;
             }
 
-            return getWaitingPatientsInOrder().indexOf(patient);
+            List<Patient> waitingPatients = getWaitingPatientsInOrder();
+            int index = waitingPatients.indexOf(patient);
+            return index == -1 ? null : index;
         } finally {
             rwLock.readLock().unlock();
         }
     }
 
     public List<Patient> getWaitingPatientsInOrder() {
-        return patients.values().stream().sorted(Comparator
-                .comparing(Patient::getEmergencyLevel).reversed()
-                .thenComparing(Patient::getArrivalTime))
-                .filter(patient -> !patient.getStatus().equals(StatusPatient.WAITING.getValue()))
+        return patients.values().stream()
+                .filter(patient -> patient.getStatus().equals(StatusPatient.WAITING.getValue()))
+                .sorted(Comparator
+                        .comparing(Patient::getEmergencyLevel).reversed()
+                        .thenComparing(Patient::getArrivalTime))
                 .toList();
     }
 
