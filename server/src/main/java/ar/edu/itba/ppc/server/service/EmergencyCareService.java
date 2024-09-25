@@ -1,6 +1,7 @@
 package ar.edu.itba.ppc.server.service;
 
 import ar.edu.itba.ppc.server.constants.Availabilities;
+import ar.edu.itba.ppc.server.constants.EmergencyRoomStatus;
 import ar.edu.itba.ppc.server.exceptions.*;
 import ar.edu.itba.ppc.server.model.Doctor;
 import ar.edu.itba.ppc.server.model.Patient;
@@ -63,14 +64,16 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
                 .findFirst()
                 .orElseThrow(() -> new NoAvailableDoctorException(roomId));
 
-        room.setStatus(Availabilities.ATTENDING.getValue());
+        room.setStatus(EmergencyRoomStatus.OCCUPIED.getValue());
         availableDoctor.setRoom(roomId.toString());
         availableDoctor.setAvailability(Availabilities.ATTENDING.getValue());
 
         return EmergencyCareResponse.newBuilder()
-                .setDoctorName(availableDoctor.getDoctorName())
                 .setRoom(room.getRoom())
+                .setDoctorName(availableDoctor.getDoctorName())
+                .setDoctorLevel(availableDoctor.getLevel())
                 .setPatientName(patient.getPatientName())
+                .setPatientLevel(patient.getEmergencyLevel())
                 .build();
     }
 
@@ -90,7 +93,7 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
             throw new DoctorNotAssignedToRoomException(doctorName, room);
         }
 
-        attendingRoom.setStatus(Availabilities.AVAILABLE.getValue());
+        attendingRoom.setStatus(EmergencyRoomStatus.FREE.getValue());
         attendingDoctor.setAvailability(Availabilities.AVAILABLE.getValue());
         attendingDoctor.setRoom(null);
         //attendingPatient.setStatus(Availabilities.COMPLETED.getValue());
@@ -98,8 +101,11 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
 
         return EmergencyCareResponse.newBuilder()
                 .setDoctorName(attendingDoctor.getDoctorName())
+                .setDoctorLevel(attendingDoctor.getLevel())
                 .setRoom(attendingRoom.getRoom())
                 .setPatientName(attendingPatient.getPatientName())
+                .setPatientLevel(attendingPatient.getEmergencyLevel())
+                .setRoomStatus(attendingRoom.getStatus())
                 .build();
     }
 }

@@ -28,43 +28,75 @@ public class EmergencyAdminClient {
         final String serverAddress = argMap.get(ClientArgs.SERVER_ADDRESS.getValue());
         final String action = argMap.get(ClientArgs.ACTION.getValue());
 
-        ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 50052)
+        ManagedChannel channel = ManagedChannelBuilder.forTarget(serverAddress)
                 .usePlaintext()
                 .build();
 
-        try {
-            emergencyAdminServiceGrpc.emergencyAdminServiceBlockingStub blockingStub =
-                    emergencyAdminServiceGrpc.newBlockingStub(channel);
-            RoomResponse replyRoom = blockingStub.addRoom(Empty.newBuilder().build());
+        emergencyAdminServiceGrpc.emergencyAdminServiceBlockingStub blockingStub =
+                emergencyAdminServiceGrpc.newBlockingStub(channel);
 
-            DoctorRequest request = DoctorRequest.newBuilder()
-                    .setDoctorName("Melisa")
-                    .setLevel(2)
-                    .build();
-            DoctorResponse reply = blockingStub.addDoctor(request);
-
-            DoctorRequest request2 = DoctorRequest.newBuilder()
-                    .setDoctorName("Fede")
-                    .setLevel(3)
-                    .build();
-
-            DoctorResponse reply2 = blockingStub.addDoctor(request2);
-
-
-            System.out.println(String.format("The room %s is %s", replyRoom.getRoom(), replyRoom.getStatus()));
-
-            System.out.println(String.format("Added doctor %s, is %s", reply.getDoctorName(), reply.getAvailability()));
-
-            System.out.println(String.format("Added doctor %s, is %s", reply2.getDoctorName(), reply2.getAvailability()));
-
+        switch (action) {
+            case "addRoom" -> {
+                latch = new CountDownLatch(1);
+                RoomResponse response = blockingStub.addRoom(Empty.newBuilder().build());
+                System.out.println(String.format("Room %d added successfully",
+                        response.getRoom()));
+            }
+            case "addDoctor" -> {
+                final String doctorName = argMap.get(ClientArgs.DOCTOR.getValue());
+                final String level = argMap.get(ClientArgs.LEVEL.getValue());
+                latch = new CountDownLatch(1);
+                DoctorRequest request = DoctorRequest.newBuilder()
+                        .setDoctorName(doctorName)
+                        .setLevel(Integer.parseInt(level))
+                        .build();
+                DoctorResponse response = blockingStub.addDoctor(request);
+                System.out.println(String.format("Doctor %s (%d) added successfully",
+                        response.getDoctorName(), response.getLevel()));
+            }
+            case "setDoctor" -> {
+                final String doctorName = argMap.get(ClientArgs.DOCTOR.getValue());
+                final String availability = argMap.get(ClientArgs.AVAILABILITY.getValue());
+                latch = new CountDownLatch(1);
+                DoctorRequest request = DoctorRequest.newBuilder()
+                        .setDoctorName(doctorName)
+                        .setAvailability(availability)
+                        .build();
+                DoctorResponse response = blockingStub.setDoctor(request);
+                System.out.println(String.format("Doctor %s (%d) is %s",
+                        response.getDoctorName(), response.getLevel(), response.getAvailability()));
+            }
+            case "checkDoctor" -> {
+                final String doctorName = argMap.get(ClientArgs.DOCTOR.getValue());
+                latch = new CountDownLatch(1);
+                DoctorRequest request = DoctorRequest.newBuilder()
+                        .setDoctorName(doctorName)
+                        .build();
+                DoctorResponse response = blockingStub.checkDoctor(request);
+                System.out.println(String.format("Doctor %s (%d) is %s",
+                        response.getDoctorName(), response.getLevel(), response.getAvailability()));
+            }
 
         }
-        catch (Exception e) {
-            System.out.println(e.toString());
+
+        try {
+            DoctorRequest request = DoctorRequest.newBuilder()
+                    .setDoctorName("John")
+                    .setLevel(1)
+                    .build();
+            DoctorResponse reply2 = blockingStub.addDoctor(request);
+
+            System.out.println(reply2.getDoctorName());
+            System.out.println(reply2.getLevel());
+            logger.info("Waiting for response...");
+            latch.await();
+        }
+        catch (RuntimeException e) {
             logger.error("Error: " + e.getMessage());
-            }
+        }
         finally {
             channel.shutdown().awaitTermination(10, TimeUnit.SECONDS);
         }
     }
 }
+

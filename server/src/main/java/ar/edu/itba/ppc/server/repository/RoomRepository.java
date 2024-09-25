@@ -1,6 +1,6 @@
 package ar.edu.itba.ppc.server.repository;
 
-import ar.edu.itba.ppc.server.constants.Availabilities;
+import ar.edu.itba.ppc.server.constants.EmergencyRoomStatus;
 import ar.edu.itba.ppc.server.model.Room;
 
 import java.util.Map;
@@ -26,7 +26,7 @@ public class RoomRepository {
     public Room addRoom() {
         rwLock.writeLock().lock();
         try {
-            rooms.put(sizeRoom, new Room(sizeRoom, Availabilities.AVAILABLE.getValue()));
+            rooms.put(sizeRoom, new Room(sizeRoom, EmergencyRoomStatus.FREE.getValue()));
             return rooms.get(sizeRoom++);
         } finally {
             rwLock.writeLock().unlock();

@@ -23,6 +23,9 @@ message EmergencyCareRequest {
 message EmergencyCareResponse {
   int32 room = 1;
   string doctorName = 2;
-  string patientName = 3;
+  int32 doctorLevel = 3;
+  string patientName = 4;
+  int32 patientLevel = 5;
+  string roomStatus = 6;
 }
 
