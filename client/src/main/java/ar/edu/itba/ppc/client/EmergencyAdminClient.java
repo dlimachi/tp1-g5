@@ -22,8 +22,8 @@ public class EmergencyAdminClient {
     private static CountDownLatch latch;
 
     public static void main(String[] args) throws InterruptedException {
-        logger.info("tp1-g5 AdministrationClient Starting ...");
-        logger.info("grpc-com-patterns Client Starting ...");
+        logger.info("tp1-g5 Emergency Administration Client Starting ...");
+        logger.info("grpc-com-patterns Emergency Administration Client Starting ...");
         Map<String,String> argMap = parseArgs(args);
         final String serverAddress = argMap.get(ClientArgs.SERVER_ADDRESS.getValue());
         final String action = argMap.get(ClientArgs.ACTION.getValue());

@@ -12,6 +12,7 @@ import ar.edu.itba.ppc.server.repository.RoomRepository;
 import ar.edu.itba.tp1g5.EmergencyCareResponse;
 import ar.edu.itba.tp1g5.EmergencyCareRequest;
 import ar.edu.itba.tp1g5.EmergencyCareServiceGrpc;
+import com.google.protobuf.Empty;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 
@@ -33,6 +34,13 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
 
     @Override
     public void startEmergencyCare(EmergencyCareRequest request, StreamObserver<EmergencyCareResponse> responseObserver) {
+        EmergencyCareResponse reply = updateStatusForEmergencyCare(request, responseObserver);
+        responseObserver.onNext(reply);
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void startAllEmergencyCare(Empty request, StreamObserver<EmergencyCareResponse> responseObserver) {
         List<EmergencyCareResponse> replies = startEmergencyCareInFreeRooms(responseObserver);
         for (EmergencyCareResponse reply : replies) {
             responseObserver.onNext(reply);
@@ -54,12 +62,12 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
                 .collect(Collectors.toList());
 
         return freeRooms.stream()
-                .map(room -> updateStatusForDoctor(EmergencyCareRequest.newBuilder().setRoom(room.getRoom()).build(), responseObserver))
+                .map(room -> updateMedicalAttention(EmergencyCareRequest.newBuilder().setRoom(room.getRoom()).build(), responseObserver))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
-    private synchronized EmergencyCareResponse updateStatusForDoctor(EmergencyCareRequest request, StreamObserver<EmergencyCareResponse> responseObserver) {
+    private synchronized EmergencyCareResponse updateMedicalAttention(EmergencyCareRequest request, StreamObserver<EmergencyCareResponse> responseObserver) {
         Integer roomId = request.getRoom();
         Room room = roomRepository.getRooms().get(roomId);
 
@@ -70,7 +78,10 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
             return null;
         }
         if (room.getStatus().equals(EmergencyRoomStatus.OCCUPIED.getValue())) {
-            return null; // Skip occupied rooms
+            responseObserver.onError(Status.ALREADY_EXISTS
+                    .withDescription("Room " + request.getRoom() + " already occupied")
+                    .asRuntimeException());
+            return null;
         }
 
         Patient patient = patientRepository.getPatients().values().stream()
@@ -80,18 +91,17 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
                 .findFirst()
                 .orElse(null);
 
-        if (patient == null) {
-            return null; // No waiting patients
-        }
-
         Doctor availableDoctor = doctorRepository.getDoctors().values().stream()
                 .filter(doctor -> doctor.getAvailability().equals(AvailabilityDoctor.AVAILABLE.getValue()))
                 .min(Comparator.comparing(Doctor::getLevel)
                         .thenComparing(Doctor::getDoctorName))
                 .orElse(null);
 
-        if (availableDoctor == null) {
-            return null; // No available doctors
+        if(Objects.isNull(patient) || Objects.isNull(availableDoctor)){
+            responseObserver.onError(Status.NOT_FOUND
+                    .withDescription("Room #" + request.getRoom() + " remains " + room.getStatus())
+                    .asRuntimeException());
+            return null;
         }
 
         room.setStatus(EmergencyRoomStatus.OCCUPIED.getValue());

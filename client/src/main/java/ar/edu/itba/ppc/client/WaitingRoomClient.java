@@ -21,8 +21,8 @@ public class WaitingRoomClient {
     private static final Logger logger = LoggerFactory.getLogger(WaitingRoomClient.class);
 
     public static void main(String[] args) throws InterruptedException {
-        logger.info("WaitingRoom Client Starting ...");
-        logger.info("grpc-com-patterns Client Starting ...");
+        logger.info("Waiting Room Client Starting ...");
+        logger.info("grpc-com-patterns Waiting Room Client Starting ...");
 
         Map<String, String> argMap = parseArgs(args);
         final String serverAddress = argMap.get(ClientArgs.SERVER_ADDRESS.getValue());

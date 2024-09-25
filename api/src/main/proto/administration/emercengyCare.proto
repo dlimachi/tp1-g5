@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "google/protobuf/empty.proto";
+
 package administration;
 
 option java_package = "ar.edu.itba.tp1g5";
@@ -8,6 +10,7 @@ option java_multiple_files = true;
 
 service EmergencyCareService {
   rpc StartEmergencyCare(EmergencyCareRequest) returns (EmergencyCareResponse);
+  rpc StartAllEmergencyCare(google.protobuf.Empty) returns (EmergencyCareResponse);
   rpc EndEmergencyCare(EmergencyCareRequest) returns (EmergencyCareResponse);
 }
 

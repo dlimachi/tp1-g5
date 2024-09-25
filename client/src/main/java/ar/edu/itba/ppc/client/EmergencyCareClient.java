@@ -25,7 +25,7 @@ public class EmergencyCareClient {
 
     public static void main(String[] args) throws InterruptedException {
         logger.info("tp1-g5 Emergency Care Client Starting ...");
-        logger.info("grpc-com-patterns Client Starting ...");
+        logger.info("grpc-com-patterns Emergency Care Client Starting ...");
         Map<String, String> argMap = parseArgs(args);
         final String serverAddress = argMap.get(ClientArgs.SERVER_ADDRESS.getValue());
         final String action = argMap.get(ClientArgs.ACTION.getValue());
@@ -55,12 +55,11 @@ public class EmergencyCareClient {
                     }
                 }
                 case "careAllPatient" -> {
-                    Empty request = Empty.newBuilder().build();
-                    /*EmergencyCareResponse response = ClientCallback.executeHandling(() -> blockingStub.startEmergencyCare(request));
+                    EmergencyCareResponse response = ClientCallback.executeHandling(() -> blockingStub.startAllEmergencyCare(Empty.newBuilder().build()));
                     if (Objects.nonNull(response)) {
-                        System.out.println(String.format("Patient %s (%d) and Doctor %s (%d) are now in Room #$d",
-                                response.getPatientName(), response.getPatientLevel(), response.getDoctorName(), response.getDoctorLevel(), response.getRoom()));
-                    }*/
+                        logger.info("Patient {} ({}) and Doctor {} ({}) are now in Room #{}",
+                                response.getPatientName(), response.getPatientLevel(), response.getDoctorName(), response.getDoctorLevel(), response.getRoom());
+                    }
                 }
                 case "dischargePatient" -> {
                     final String room = argMap.get(ClientArgs.ROOM.getValue());
