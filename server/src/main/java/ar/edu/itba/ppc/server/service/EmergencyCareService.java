@@ -1,7 +1,8 @@
 package ar.edu.itba.ppc.server.service;
 
-import ar.edu.itba.ppc.server.constants.Availabilities;
+import ar.edu.itba.ppc.server.constants.AvailabilityDoctor;
 import ar.edu.itba.ppc.server.constants.EmergencyRoomStatus;
+import ar.edu.itba.ppc.server.constants.StatusPatient;
 import ar.edu.itba.ppc.server.exceptions.*;
 import ar.edu.itba.ppc.server.model.Doctor;
 import ar.edu.itba.ppc.server.model.Patient;
@@ -47,7 +48,7 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
         if (room == null) {
             throw new RoomDoesntExistsException(roomId);
         }
-        if (room.getStatus().equals(Availabilities.ATTENDING.getValue())) {
+        if (room.getStatus().equals(AvailabilityDoctor.ATTENDING.getValue())) {
             throw new RoomAlreadyOccupiedException(roomId);
         }
 
@@ -58,7 +59,7 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
                 .orElseThrow(() -> new RuntimeException("No patient found"));
 
         Doctor availableDoctor = doctorRepository.getDoctors().values().stream()
-                .filter(doctor -> doctor.getAvailability().equals(Availabilities.AVAILABLE.getValue()))
+                .filter(doctor -> doctor.getAvailability().equals(AvailabilityDoctor.AVAILABLE.getValue()))
                 .sorted(Comparator.comparing(Doctor::getLevel)
                         .thenComparing(Doctor::getDoctorName))
                 .findFirst()
@@ -66,7 +67,8 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
 
         room.setStatus(EmergencyRoomStatus.OCCUPIED.getValue());
         availableDoctor.setRoom(roomId.toString());
-        availableDoctor.setAvailability(Availabilities.ATTENDING.getValue());
+        availableDoctor.setAvailability(AvailabilityDoctor.ATTENDING.getValue());
+        patient.setStatus(StatusPatient.ATTENDING.getValue());
 
         return EmergencyCareResponse.newBuilder()
                 .setRoom(room.getRoom())
@@ -94,10 +96,9 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
         }
 
         attendingRoom.setStatus(EmergencyRoomStatus.FREE.getValue());
-        attendingDoctor.setAvailability(Availabilities.AVAILABLE.getValue());
+        attendingDoctor.setAvailability(AvailabilityDoctor.AVAILABLE.getValue());
         attendingDoctor.setRoom(null);
-        //attendingPatient.setStatus(Availabilities.COMPLETED.getValue());
-        //podriamos agregar un estado de completado para el paciente para despues mostrarlo como consulta finalizada
+        attendingPatient.setStatus(StatusPatient.COMPLETED.getValue());
 
         return EmergencyCareResponse.newBuilder()
                 .setDoctorName(attendingDoctor.getDoctorName())

@@ -54,15 +54,6 @@ public class QueryClient {
                 QueryCareCompletedResponse response = blockingStub.queryCares(request);
             }
         }
-
-            /*EmergencyCareRequest requested = EmergencyCareRequest.newBuilder()
-                    .setRoom(1)
-                    .build();
-
-            EmergencyCareResponse reply = blockingStub.startEmergencyCare(requested);
-            System.out.println(String.format("Start emergency care in %s with %s", reply.getRoom(), reply.getDoctorName()));
-
-             */
             logger.info("Waiting for response...");
             latch.await();
         }

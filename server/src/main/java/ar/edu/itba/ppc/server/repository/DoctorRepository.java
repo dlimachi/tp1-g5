@@ -1,6 +1,6 @@
 package ar.edu.itba.ppc.server.repository;
 
-import ar.edu.itba.ppc.server.constants.Availabilities;
+import ar.edu.itba.ppc.server.constants.AvailabilityDoctor;
 import ar.edu.itba.ppc.server.model.Doctor;
 
 import java.util.Map;
@@ -20,7 +20,7 @@ public class DoctorRepository {
     public Doctor addDoctor(String doctorName, Integer level) {
         rwLock.writeLock().lock();
         try {
-            doctors.putIfAbsent(doctorName, new Doctor(doctorName, level, Availabilities.AVAILABLE.getValue(), null));
+            doctors.putIfAbsent(doctorName, new Doctor(doctorName, level, AvailabilityDoctor.AVAILABLE.getValue(), null));
             return doctors.get(doctorName);
         } finally {
             rwLock.writeLock().unlock();

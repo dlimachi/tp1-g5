@@ -21,5 +21,6 @@ message PatientResponse {
   string patientName = 1;
   int32 level = 2;
   int32 waitingPatient = 3;
+  string status = 4;
 }
 

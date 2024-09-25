@@ -1,6 +1,6 @@
 package ar.edu.itba.ppc.server.service;
 
-import ar.edu.itba.ppc.server.constants.Availabilities;
+import ar.edu.itba.ppc.server.constants.AvailabilityDoctor;
 import ar.edu.itba.ppc.server.exceptions.DoctorAlreadyExistsException;
 import ar.edu.itba.ppc.server.exceptions.DoctorDoesntExistsException;
 import ar.edu.itba.ppc.server.exceptions.InvalidAvailabilityParameter;
@@ -89,7 +89,7 @@ public class EmergencyAdminService extends emergencyAdminServiceGrpc.emergencyAd
     }
 
     private boolean isAvailabilityValid(String availability) {
-        return EnumSet.allOf(Availabilities.class)
+        return EnumSet.allOf(AvailabilityDoctor.class)
                 .stream()
                 .map(Enum::name)
                 .anyMatch(name -> name.equalsIgnoreCase(availability));

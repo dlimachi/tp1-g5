@@ -1,10 +1,12 @@
 package ar.edu.itba.ppc.server.repository;
 
+import ar.edu.itba.ppc.server.constants.StatusPatient;
 import ar.edu.itba.ppc.server.model.Patient;
-import java.util.ArrayList;
+
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -23,24 +25,14 @@ public class PatientRepository {
      * Agrega un nuevo paciente al repositorio.
      * Usa un write lock para asegurar que la operación sea atómica.
      */
-    public Patient addPatient(Patient patient) {
+    public Patient addPatient(String patientName, Integer level) {
         rwLock.writeLock().lock();
         try {
-            if (patients.putIfAbsent(patient.getPatientName(), patient) == null) {
-                return patient;
-            }
-            return null; // Patient already exists
+            patients.put(patientName, new Patient(patientName, level, StatusPatient.WAITING.getValue()));
+            return patients.get(patientName);
         } finally {
             rwLock.writeLock().unlock();
         }
-    }
-
-    /**
-     * Obtiene un paciente por su nombre.
-     * No necesita lock porque ConcurrentHashMap maneja lecturas de forma thread-safe.
-     */
-    public Patient getPatient(String patientName) {
-        return patients.get(patientName);
     }
 
     /**
@@ -51,7 +43,7 @@ public class PatientRepository {
         rwLock.writeLock().lock();
         try {
             Patient patient = patients.get(patientName);
-            if (patient != null) {
+            if (Objects.nonNull(patient)) {
                 patient.setEmergencyLevel(newLevel);
                 return patient;
             }
@@ -65,36 +57,17 @@ public class PatientRepository {
      * Calcula cuántos pacientes están delante en la lista de espera.
      * Usa un read lock para asegurar una vista consistente de todos los pacientes durante el cálculo.
      */
-    public Patient getPatientsAhead(String patientName) {
+    public Integer getPatientsAhead(String patientName) {
         rwLock.readLock().lock();
         try {
             Patient patient = patients.get(patientName);
-            if (patient == null) {
-                return null; // Patient not found
+            if (Objects.isNull(patient)) {
+                return null;
             }
 
-            List<Patient> patientList = new ArrayList<>(patients.values());
-            patientList.sort(Comparator
-                    .comparing(Patient::getEmergencyLevel).reversed()
-                    .thenComparing(Patient::getArrivalTime));
-
-            int position = patientList.indexOf(patient);
-            return patient;
+            return getWaitingPatientsInOrder().indexOf(patient);
         } finally {
             rwLock.readLock().unlock();
-        }
-    }
-
-    /**
-     * Elimina un paciente del repositorio.
-     * Usa un write lock para asegurar que la eliminación sea atómica.
-     */
-    public Patient removePatient(String patientName) {
-        rwLock.writeLock().lock();
-        try {
-            return patients.remove(patientName);
-        } finally {
-            rwLock.writeLock().unlock();
         }
     }
 
@@ -102,7 +75,7 @@ public class PatientRepository {
         return patients.values().stream().sorted(Comparator
                 .comparing(Patient::getEmergencyLevel).reversed()
                 .thenComparing(Patient::getArrivalTime))
-                //.filter(patient -> patient.getStatus().equals("waiting"))
+                .filter(patient -> !patient.getStatus().equals(StatusPatient.WAITING.getValue()))
                 .toList();
     }
 

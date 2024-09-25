@@ -1,13 +1,12 @@
 package ar.edu.itba.ppc.server.constants;
 
-public enum Availabilities {
-    AVAILABLE("available"),
-    UNAVAILABLE("unavailable"),
+public enum StatusPatient {
+    WAITING("waiting"),
+    COMPLETED("completed"),
     ATTENDING("attending");
 
-    private final String value;
-
-    Availabilities(String value) {
+    private String value;
+    StatusPatient(String value) {
         this.value = value;
     }
 

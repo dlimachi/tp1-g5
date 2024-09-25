@@ -7,10 +7,21 @@ public class Patient {
     private Integer emergencyLevel;
     private final Instant arrivalTime;
 
-    public Patient(String patientName, Integer emergencyLevel) {
+    private String status;
+
+    public Patient(String patientName, Integer emergencyLevel, String status) {
         this.patientName = patientName;
         this.emergencyLevel = emergencyLevel;
         this.arrivalTime = Instant.now();
+        this.status = status;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     public String getPatientName() {
