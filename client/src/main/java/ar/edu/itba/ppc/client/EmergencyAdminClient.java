@@ -94,7 +94,7 @@ public class EmergencyAdminClient {
             //latch.await();
 
     } catch (StatusRuntimeException e) {
-        logger.error("gRPC failed: {}", e.getStatus().getDescription());
+        logger.error("gRPC failed: {}", e.getStatus());
     } catch (Exception e) {
         logger.error("Unexpected error: ", e);
     } finally {
