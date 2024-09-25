@@ -1,22 +1,48 @@
 package ar.edu.itba.ppc.client;
 
+import ar.edu.itba.ppc.client.utilsConsole.ClientArgs;
 import ar.edu.itba.tp1g5.PatientRequest;
 import ar.edu.itba.tp1g5.PatientResponse;
 import ar.edu.itba.tp1g5.WaitingRoomServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import static ar.edu.itba.ppc.client.utilsConsole.ClientUtils.parseArgs;
 
 public class WaitingRoomClient {
     private static final Logger logger = LoggerFactory.getLogger(WaitingRoomClient.class);
 
     public static void main(String[] args) throws InterruptedException {
         logger.info("WaitingRoom Client Starting ...");
+        logger.info("grpc-com-patterns Client Starting ...");
 
-        ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 50051)
+        Map<String, String> argMap = parseArgs(args);
+        final String serverAddress = argMap.get(ClientArgs.SERVER_ADDRESS.getValue());
+        final String action = argMap.get(ClientArgs.ACTION.getValue());
+        final String patient = argMap.get(ClientArgs.PATIENT.getValue());
+        final String levelStr = argMap.get(ClientArgs.LEVEL.getValue());
+
+        if (serverAddress == null || action == null) {
+            logger.error("Missing required arguments. Usage: -DserverAddress=<address> -Daction=<action> -Dpatient=<name> [-Dlevel=<level>]");
+            return;
+        }
+
+        String[] addressParts = serverAddress.split(":");
+        if (addressParts.length != 2) {
+            logger.error("Invalid server address format. Use: host:port");
+            return;
+        }
+        String host = addressParts[0];
+        int port = Integer.parseInt(addressParts[1]);
+
+        ManagedChannel channel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()
                 .build();
 
@@ -24,36 +50,80 @@ public class WaitingRoomClient {
             WaitingRoomServiceGrpc.WaitingRoomServiceBlockingStub blockingStub =
                     WaitingRoomServiceGrpc.newBlockingStub(channel);
 
-            // Test registerPatient
-            PatientRequest registerRequest = PatientRequest.newBuilder()
-                    .setPatientName("Foo")
-                    .setLevel(3)
-                    .build();
-            PatientResponse registerResponse = blockingStub.registerPatient(registerRequest);
-            System.out.printf("Patient %s (%d) is in the waiting room%n",
-                    registerResponse.getPatientName(), registerResponse.getLevel());
-
-            // Test updateEmergencyLevel
-            PatientRequest updateRequest = PatientRequest.newBuilder()
-                    .setPatientName("Foo")
-                    .setLevel(4)
-                    .build();
-            PatientResponse updateResponse = blockingStub.updateEmergencyLevel(updateRequest);
-            System.out.printf("Patient %s (%d) is in the waiting room%n",
-                    updateResponse.getPatientName(), updateResponse.getLevel());
-
-            // Test checkWaitingList
-            PatientRequest checkRequest = PatientRequest.newBuilder()
-                    .setPatientName("Foo")
-                    .build();
-            PatientResponse checkResponse = blockingStub.checkWaitingList(checkRequest);
-            System.out.printf("Patient %s (%d) is in the waiting room with %d patients ahead%n",
-                    checkResponse.getPatientName(), checkResponse.getLevel(), checkResponse.getWaitingPatient());
-
+            switch (action) {
+                case "addPatient":
+                    if (patient == null || levelStr == null) {
+                        logger.error("Patient name and level are required for addPatient action");
+                        return;
+                    }
+                    addPatient(blockingStub, patient, Integer.parseInt(levelStr));
+                    break;
+                case "updateLevel":
+                    if (patient == null || levelStr == null) {
+                        logger.error("Patient name and new level are required for updateLevel action");
+                        return;
+                    }
+                    updateLevel(blockingStub, patient, Integer.parseInt(levelStr));
+                    break;
+                case "checkPatient":
+                    if (patient == null) {
+                        logger.error("Patient name is required for checkPatient action");
+                        return;
+                    }
+                    checkPatient(blockingStub, patient);
+                    break;
+                default:
+                    logger.error("Unknown action: " + action);
+            }
+        } catch (StatusRuntimeException e) {
+            logger.error("RPC failed: {}", e.getStatus());
         } catch (Exception e) {
-            logger.error("Error: " + e.getMessage());
+            logger.error("Unexpected error: ", e);
         } finally {
-            channel.shutdown().awaitTermination(10, TimeUnit.SECONDS);
+            channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+        }
+    }
+
+    private static void addPatient(WaitingRoomServiceGrpc.WaitingRoomServiceBlockingStub stub, String patient, int level) {
+        PatientRequest request = PatientRequest.newBuilder()
+                .setPatientName(patient)
+                .setLevel(level)
+                .build();
+        try {
+            PatientResponse response = stub.registerPatient(request);
+            logger.info("Patient {} added with emergency level {}", response.getPatientName(), response.getLevel());
+        } catch (StatusRuntimeException e) {
+            if (e.getStatus().getCode() == Status.Code.ALREADY_EXISTS) {
+                logger.error(e.getMessage());
+            } else {
+                logger.error("Failed to add patient: {}", e.getStatus().getDescription());
+            }
+        }
+    }
+
+    private static void updateLevel(WaitingRoomServiceGrpc.WaitingRoomServiceBlockingStub stub, String patient, int newLevel) {
+        PatientRequest request = PatientRequest.newBuilder()
+                .setPatientName(patient)
+                .setLevel(newLevel)
+                .build();
+        try {
+            PatientResponse response = stub.updateEmergencyLevel(request);
+            logger.info("Updated emergency level for patient {} to {}", response.getPatientName(), response.getLevel());
+        } catch (StatusRuntimeException e) {
+            logger.error("Failed to update emergency level: {}", e.getStatus().getDescription());
+        }
+    }
+
+    private static void checkPatient(WaitingRoomServiceGrpc.WaitingRoomServiceBlockingStub stub, String patient) {
+        PatientRequest request = PatientRequest.newBuilder()
+                .setPatientName(patient)
+                .build();
+        try {
+            PatientResponse response = stub.checkWaitingList(request);
+            logger.info("Patient {} is in the waiting room with emergency level {} and {} patients ahead",
+                    response.getPatientName(), response.getLevel(), response.getWaitingPatient());
+        } catch (StatusRuntimeException e) {
+            logger.error("Failed to check patient: {}", e.getStatus().getDescription());
         }
     }
 }

@@ -82,4 +82,8 @@ public class PatientRepository {
     public Map<String, Patient> getPatients() {
         return patients;
     }
+
+    public Patient getPatient(String name) {
+        return patients.get(name);
+    }
 }

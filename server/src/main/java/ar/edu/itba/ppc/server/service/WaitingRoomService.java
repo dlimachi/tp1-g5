@@ -20,17 +20,27 @@ public class WaitingRoomService extends WaitingRoomServiceGrpc.WaitingRoomServic
         String name = request.getPatientName();
         int level = request.getLevel();
 
-        if (patientRepository.addPatient(name, level) != null) {
+        Patient existingPatient = patientRepository.getPatient(name);
+        if (existingPatient != null) {
+            responseObserver.onError(Status.ALREADY_EXISTS
+                    .withDescription("Patient already exists in the waiting room.")
+                    .asRuntimeException());
+            return;
+        }
+
+        Patient createdPatient = patientRepository.addPatient(name,level);
+
+        if (createdPatient != null) {
             PatientResponse response = PatientResponse.newBuilder()
-                    .setPatientName(name)
-                    .setLevel(level)
+                    .setPatientName(createdPatient.getPatientName())
+                    .setLevel(createdPatient.getEmergencyLevel())
                     .build();
 
             responseObserver.onNext(response);
             responseObserver.onCompleted();
         } else {
-            responseObserver.onError(Status.ALREADY_EXISTS
-                    .withDescription("Patient already exists in the waiting room.")
+            responseObserver.onError(Status.INTERNAL
+                    .withDescription("Failed to add patient to the waiting room.")
                     .asRuntimeException());
         }
     }
