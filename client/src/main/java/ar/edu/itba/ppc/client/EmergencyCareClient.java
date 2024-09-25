@@ -55,10 +55,12 @@ public class EmergencyCareClient {
                     }
                 }
                 case "careAllPatient" -> {
-                    EmergencyCareResponse response = ClientCallback.executeHandling(() -> blockingStub.startAllEmergencyCare(Empty.newBuilder().build()));
+                    EmergencyCareListResponse response = ClientCallback.executeHandling(() -> blockingStub.startAllEmergencyCare(Empty.newBuilder().build()));
                     if (Objects.nonNull(response)) {
-                        logger.info("Patient {} ({}) and Doctor {} ({}) are now in Room #{}",
-                                response.getPatientName(), response.getPatientLevel(), response.getDoctorName(), response.getDoctorLevel(), response.getRoom());
+                        for (EmergencyCareResponse careResponse : response.getEmergencyCareListList()) {
+                            logger.info("Patient {} ({}) and Doctor {} ({}) are now in Room #{}",
+                                    careResponse.getPatientName(), careResponse.getPatientLevel(), careResponse.getDoctorName(), careResponse.getDoctorLevel(), careResponse.getRoom());
+                        }
                     }
                 }
                 case "dischargePatient" -> {
