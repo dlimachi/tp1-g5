@@ -38,10 +38,11 @@ public class EmergencyAdminService extends emergencyAdminServiceGrpc.emergencyAd
 
     @Override
     public void addDoctor(DoctorRequest request, StreamObserver<DoctorResponse> responseObserver) {
-        if (Objects.isNull(repository.getDoctor(request.getDoctorName())) && (request.getLevel() < 1 || request.getLevel() > 5)) {
+        if (Objects.isNull(repository.getDoctor(request.getDoctorName())) || (request.getLevel() < 1 || request.getLevel() > 5)) {
             responseObserver.onError(Status.ALREADY_EXISTS
                     .withDescription("Doctor " + request.getDoctorName() + " already exists")
                     .asRuntimeException());
+            return;
         }
 
         Doctor response = repository.addDoctor(request.getDoctorName(), request.getLevel());
@@ -59,11 +60,13 @@ public class EmergencyAdminService extends emergencyAdminServiceGrpc.emergencyAd
             responseObserver.onError(Status.NOT_FOUND
                     .withDescription("Doctor " + request.getDoctorName() + " doesn't exists")
                     .asRuntimeException());
+            return;
         }
         if(!isAvailabilityValid(request.getAvailability())) {
             responseObserver.onError(Status.NOT_FOUND
                     .withDescription("The availability " + request.getAvailability() +" is invalid.")
                     .asRuntimeException());
+            return;
         }
 
         Doctor response = repository.setAvailabilityDoctor(request.getDoctorName(), request.getAvailability());
@@ -82,6 +85,7 @@ public class EmergencyAdminService extends emergencyAdminServiceGrpc.emergencyAd
             responseObserver.onError(Status.NOT_FOUND
                     .withDescription("Doctor " + request.getDoctorName() + " doesn't exists")
                     .asRuntimeException());
+            return;
         }
 
         Doctor response = repository.getDoctor(request.getDoctorName());
