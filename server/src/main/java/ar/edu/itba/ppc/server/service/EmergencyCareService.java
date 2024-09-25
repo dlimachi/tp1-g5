@@ -3,7 +3,6 @@ package ar.edu.itba.ppc.server.service;
 import ar.edu.itba.ppc.server.constants.AvailabilityDoctor;
 import ar.edu.itba.ppc.server.constants.EmergencyRoomStatus;
 import ar.edu.itba.ppc.server.constants.StatusPatient;
-import ar.edu.itba.ppc.server.exceptions.*;
 import ar.edu.itba.ppc.server.model.Doctor;
 import ar.edu.itba.ppc.server.model.Patient;
 import ar.edu.itba.ppc.server.model.Room;
