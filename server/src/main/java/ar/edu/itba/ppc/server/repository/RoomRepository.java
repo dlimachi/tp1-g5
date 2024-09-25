@@ -31,4 +31,11 @@ public class RoomRepository {
             rwLock.writeLock().unlock();
         }
     }
+
+    public List<Room> getFreeRooms () {
+        return rooms.values().stream()
+                .filter(room -> room.getStatus().equals(EmergencyRoomStatus.FREE.getValue()))
+                .sorted(Comparator.comparing(Room::getRoom))
+                .collect(Collectors.toList());
+    }
 }
