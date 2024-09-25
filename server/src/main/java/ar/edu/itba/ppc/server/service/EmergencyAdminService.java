@@ -1,18 +1,16 @@
 package ar.edu.itba.ppc.server.service;
 
 import ar.edu.itba.ppc.server.constants.AvailabilityDoctor;
-import ar.edu.itba.ppc.server.exceptions.DoctorAlreadyExistsException;
-import ar.edu.itba.ppc.server.exceptions.DoctorDoesntExistsException;
-import ar.edu.itba.ppc.server.exceptions.InvalidAvailabilityParameter;
 import ar.edu.itba.ppc.server.model.Doctor;
 import ar.edu.itba.ppc.server.model.Room;
+import ar.edu.itba.ppc.server.repository.DoctorRepository;
 import ar.edu.itba.ppc.server.repository.RoomRepository;
 import ar.edu.itba.tp1g5.DoctorRequest;
 import ar.edu.itba.tp1g5.DoctorResponse;
 import ar.edu.itba.tp1g5.RoomResponse;
 import ar.edu.itba.tp1g5.emergencyAdminServiceGrpc;
-import ar.edu.itba.ppc.server.repository.DoctorRepository;
 import com.google.protobuf.Empty;
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 
 import java.util.EnumSet;
@@ -41,7 +39,9 @@ public class EmergencyAdminService extends emergencyAdminServiceGrpc.emergencyAd
     @Override
     public void addDoctor(DoctorRequest request, StreamObserver<DoctorResponse> responseObserver) {
         if (Objects.isNull(repository.getDoctor(request.getDoctorName())) && (request.getLevel() < 1 || request.getLevel() > 5)) {
-            throw new DoctorAlreadyExistsException(request.getDoctorName());
+            responseObserver.onError(Status.ALREADY_EXISTS
+                    .withDescription("Doctor " + request.getDoctorName() + " already exists")
+                    .asRuntimeException());
         }
 
         Doctor response = repository.addDoctor(request.getDoctorName(), request.getLevel());
@@ -56,10 +56,14 @@ public class EmergencyAdminService extends emergencyAdminServiceGrpc.emergencyAd
     @Override
     public void setDoctor(DoctorRequest request, StreamObserver<DoctorResponse> responseObserver) {
         if (Objects.isNull(repository.getDoctor(request.getDoctorName()))) {
-            throw new DoctorDoesntExistsException(request.getDoctorName());
+            responseObserver.onError(Status.NOT_FOUND
+                    .withDescription("Doctor " + request.getDoctorName() + " doesn't exists")
+                    .asRuntimeException());
         }
         if(!isAvailabilityValid(request.getAvailability())) {
-            throw new InvalidAvailabilityParameter(request.getAvailability());
+            responseObserver.onError(Status.NOT_FOUND
+                    .withDescription("The availability " + request.getAvailability() +" is invalid.")
+                    .asRuntimeException());
         }
 
         Doctor response = repository.setAvailabilityDoctor(request.getDoctorName(), request.getAvailability());
@@ -75,7 +79,9 @@ public class EmergencyAdminService extends emergencyAdminServiceGrpc.emergencyAd
     @Override
     public void checkDoctor(DoctorRequest request, StreamObserver<DoctorResponse> responseObserver) {
         if (Objects.isNull(repository.getDoctor(request.getDoctorName()))) {
-            throw new DoctorDoesntExistsException(request.getDoctorName());
+            responseObserver.onError(Status.NOT_FOUND
+                    .withDescription("Doctor " + request.getDoctorName() + " doesn't exists")
+                    .asRuntimeException());
         }
 
         Doctor response = repository.getDoctor(request.getDoctorName());

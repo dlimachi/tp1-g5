@@ -1,17 +1,17 @@
 package ar.edu.itba.ppc.client;
 
 import ar.edu.itba.ppc.client.utilsConsole.ClientArgs;
-import ar.edu.itba.tp1g5.DoctorRequest;
-import ar.edu.itba.tp1g5.DoctorResponse;
-import ar.edu.itba.tp1g5.RoomResponse;
-import ar.edu.itba.tp1g5.emergencyAdminServiceGrpc;
+import ar.edu.itba.ppc.client.utilsConsole.ClientCallback;
+import ar.edu.itba.tp1g5.*;
 import com.google.protobuf.Empty;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.StatusRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -22,82 +22,82 @@ public class EmergencyAdminClient {
     private static CountDownLatch latch;
 
     public static void main(String[] args) throws InterruptedException {
-        logger.info("tp1-g5 Client Starting ...");
+        logger.info("tp1-g5 AdministrationClient Starting ...");
         logger.info("grpc-com-patterns Client Starting ...");
         Map<String,String> argMap = parseArgs(args);
         final String serverAddress = argMap.get(ClientArgs.SERVER_ADDRESS.getValue());
         final String action = argMap.get(ClientArgs.ACTION.getValue());
+        final String doctorName = argMap.get(ClientArgs.DOCTOR.getValue());
+        final String level = argMap.get(ClientArgs.LEVEL.getValue());
+        final String availability = argMap.get(ClientArgs.AVAILABILITY.getValue());
+
+        if (serverAddress == null || action == null) {
+            logger.error("Missing required arguments. Usage: -DserverAddress=<address> -Daction=<action> -Ddoctor=<name> [-Dlevel=<level>]");
+            return;
+        }
 
         ManagedChannel channel = ManagedChannelBuilder.forTarget(serverAddress)
                 .usePlaintext()
                 .build();
         try {
-        emergencyAdminServiceGrpc.emergencyAdminServiceBlockingStub blockingStub =
+            emergencyAdminServiceGrpc.emergencyAdminServiceBlockingStub blockingStub =
                 emergencyAdminServiceGrpc.newBlockingStub(channel);
 
-        switch (action) {
-            case "addRoom" -> {
-                latch = new CountDownLatch(1);
-                RoomResponse response = blockingStub.addRoom(Empty.newBuilder().build());
-                System.out.println(String.format("Room %d added successfully",
-                        response.getRoom()));
+            switch (action) {
+                case "addRoom":
+                    //latch = new CountDownLatch(1);
+                    RoomResponse response = ClientCallback.executeHandling(() -> blockingStub.addRoom(Empty.newBuilder().build()));
+                    if(Objects.nonNull(response))
+                        logger.info("Room {} added successfully", response.getRoom());
+                    break;
+                case "addDoctor":
+                    if (level == null || doctorName == null) {
+                        logger.error("Doctor name and level are required for addDoctor action");
+                        return;
+                    }
+                    DoctorRequest addRequest = DoctorRequest.newBuilder()
+                            .setDoctorName(doctorName)
+                            .setLevel(Integer.parseInt(level))
+                            .build();
+                    DoctorResponse addResponse = ClientCallback.executeHandling(() -> blockingStub.addDoctor(addRequest));
+                    if(Objects.nonNull(addResponse))
+                        logger.info("Doctor {} ({}) added successfully", addResponse.getDoctorName(), addResponse.getLevel());
+                    break;
+                case "setDoctor":
+                    if (level == null || doctorName == null) {
+                        logger.error("Doctor name and level are required for setDoctor action");
+                        return;
+                    }
+                    DoctorRequest setRequest = DoctorRequest.newBuilder()
+                            .setDoctorName(doctorName)
+                            .setAvailability(availability)
+                            .build();
+                    DoctorResponse setResponse = ClientCallback.executeHandling(() -> blockingStub.setDoctor(setRequest));
+                    if(Objects.nonNull(setResponse))
+                        logger.info("Doctor {} ({}) is {}", setResponse.getDoctorName(), setResponse.getLevel(), setResponse.getAvailability());
+                    break;
+                case "checkDoctor":
+                    if (doctorName == null) {
+                        logger.error("Doctor name is required for checkDoctor action");
+                        return;
+                    }
+                    DoctorRequest checkRequest = DoctorRequest.newBuilder()
+                            .setDoctorName(doctorName)
+                            .build();
+                    DoctorResponse checkResponse = ClientCallback.executeHandling(() -> blockingStub.checkDoctor(checkRequest));
+                    if(Objects.nonNull(checkResponse))
+                        logger.info("Doctor {} ({}) is {}", checkResponse.getDoctorName(), checkResponse.getLevel(), checkResponse.getAvailability());
+                    break;
             }
-            case "addDoctor" -> {
-                final String doctorName = argMap.get(ClientArgs.DOCTOR.getValue());
-                final String level = argMap.get(ClientArgs.LEVEL.getValue());
-                latch = new CountDownLatch(1);
-                DoctorRequest request = DoctorRequest.newBuilder()
-                        .setDoctorName(doctorName)
-                        .setLevel(Integer.parseInt(level))
-                        .build();
-                DoctorResponse response = blockingStub.addDoctor(request);
-                System.out.println(String.format("Doctor %s (%d) added successfully",
-                        response.getDoctorName(), response.getLevel()));
-            }
-            case "setDoctor" -> {
-                final String doctorName = argMap.get(ClientArgs.DOCTOR.getValue());
-                final String availability = argMap.get(ClientArgs.AVAILABILITY.getValue());
-                latch = new CountDownLatch(1);
-                DoctorRequest request = DoctorRequest.newBuilder()
-                        .setDoctorName(doctorName)
-                        .setAvailability(availability)
-                        .build();
-                DoctorResponse response = blockingStub.setDoctor(request);
-                System.out.println(String.format("Doctor %s (%d) is %s",
-                        response.getDoctorName(), response.getLevel(), response.getAvailability()));
-            }
-            case "checkDoctor" -> {
-                final String doctorName = argMap.get(ClientArgs.DOCTOR.getValue());
-                latch = new CountDownLatch(1);
-                DoctorRequest request = DoctorRequest.newBuilder()
-                        .setDoctorName(doctorName)
-                        .build();
-                DoctorResponse response = blockingStub.checkDoctor(request);
-                System.out.println(String.format("Doctor %s (%d) is %s",
-                        response.getDoctorName(), response.getLevel(), response.getAvailability()));
-            }
+            //latch.await();
 
-        }
-
-
-//            DoctorRequest request = DoctorRequest.newBuilder()
-//                    .setDoctorName("John")
-//                    .setLevel(1)
-//                    .build();
-//            DoctorResponse reply2 = blockingStub.addDoctor(request);
-//
-//            System.out.println(reply2.getDoctorName());
-//            System.out.println(reply2.getLevel());
-//            logger.info("Waiting for response...");
-//            latch.await();
-            latch.await();
-        }
-        catch (RuntimeException e) {
-            logger.error("Error: " + e.getMessage());
-        }
-        finally {
-            channel.shutdown().awaitTermination(1000, TimeUnit.SECONDS);
-        }
+    } catch (StatusRuntimeException e) {
+        logger.error("gRPC failed: {}", e.getStatus());
+    } catch (Exception e) {
+        logger.error("Unexpected error: ", e);
+    } finally {
+        channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
     }
 }
 

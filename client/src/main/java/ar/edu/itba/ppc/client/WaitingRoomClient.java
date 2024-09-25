@@ -1,6 +1,7 @@
 package ar.edu.itba.ppc.client;
 
 import ar.edu.itba.ppc.client.utilsConsole.ClientArgs;
+import ar.edu.itba.ppc.client.utilsConsole.ClientCallback;
 import ar.edu.itba.tp1g5.PatientRequest;
 import ar.edu.itba.tp1g5.PatientResponse;
 import ar.edu.itba.tp1g5.WaitingRoomServiceGrpc;
@@ -12,7 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import static ar.edu.itba.ppc.client.utilsConsole.ClientUtils.parseArgs;
@@ -61,7 +61,7 @@ public class WaitingRoomClient {
                             .setPatientName(patient)
                             .setLevel(Integer.parseInt(levelStr))
                             .build();
-                    PatientResponse addResponse = executeHandling(() -> blockingStub.registerPatient(addRequest));
+                    PatientResponse addResponse = ClientCallback.executeHandling(() -> blockingStub.registerPatient(addRequest));
                     if(Objects.nonNull(addResponse))
                         logger.info("Patient {} added with emergency level {}", addResponse.getPatientName(), addResponse.getLevel());
                     break;
@@ -74,7 +74,7 @@ public class WaitingRoomClient {
                             .setPatientName(patient)
                             .setLevel(Integer.parseInt(levelStr))
                             .build();
-                    PatientResponse updateResponse = executeHandling(() -> blockingStub.updateEmergencyLevel(updateRequest));
+                    PatientResponse updateResponse = ClientCallback.executeHandling(() -> blockingStub.updateEmergencyLevel(updateRequest));
                     if(Objects.nonNull(updateResponse))
                         logger.info("Updated emergency level for patient {} to {}", updateResponse.getPatientName(), updateResponse.getLevel());
                     break;
@@ -83,7 +83,7 @@ public class WaitingRoomClient {
                             .setPatientName(patient)
                             .build();
 
-                    PatientResponse checkResponse = blockingStub.checkWaitingList(checkRequest);
+                    PatientResponse checkResponse = ClientCallback.executeHandling(() -> blockingStub.checkWaitingList(checkRequest));
                     if(Objects.nonNull(checkResponse))
                         logger.info("Patient {} ({}) is in the waiting room with {} patients ahead",
                             checkResponse.getPatientName(), checkResponse.getLevel(), checkResponse.getWaitingPatient());
@@ -97,19 +97,6 @@ public class WaitingRoomClient {
             logger.error("Unexpected error: ", e);
         } finally {
             channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
-        }
-    }
-
-    public static <T> T executeHandling(Callable<T> callable) {
-        try {
-            return callable.call();
-        } catch (StatusRuntimeException e) {
-            logger.error(e.getStatus().getDescription());
-            return null;
-        }
-        catch (Exception e) {
-            logger.error(e.getMessage());
-            return null;
         }
     }
 }

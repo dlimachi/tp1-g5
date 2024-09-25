@@ -5,14 +5,13 @@ import ar.edu.itba.ppc.server.model.Room;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class RoomRepository {
-    private final Map<Integer, Room> rooms;
+    private final ConcurrentHashMap<Integer, Room> rooms;
     private Integer sizeRoom = 1;
 
-    private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
 
     public RoomRepository() {
         this.rooms = new ConcurrentHashMap<>();

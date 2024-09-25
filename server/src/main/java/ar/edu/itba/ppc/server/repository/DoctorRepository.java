@@ -5,16 +5,15 @@ import ar.edu.itba.ppc.server.model.Doctor;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class DoctorRepository {
-    private final Map<String, Doctor> doctors;
+    private final ConcurrentHashMap<String, Doctor> doctors;
 
-    private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
 
     public DoctorRepository() {
-        doctors = new ConcurrentHashMap<>();
+        this.doctors = new ConcurrentHashMap<>();
     }
 
     public Doctor addDoctor(String doctorName, Integer level) {

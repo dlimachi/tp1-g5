@@ -3,18 +3,20 @@ package ar.edu.itba.ppc.server.service;
 import ar.edu.itba.ppc.server.constants.AvailabilityDoctor;
 import ar.edu.itba.ppc.server.constants.EmergencyRoomStatus;
 import ar.edu.itba.ppc.server.constants.StatusPatient;
-import ar.edu.itba.ppc.server.exceptions.*;
 import ar.edu.itba.ppc.server.model.Doctor;
 import ar.edu.itba.ppc.server.model.Patient;
 import ar.edu.itba.ppc.server.model.Room;
+import ar.edu.itba.ppc.server.repository.DoctorRepository;
 import ar.edu.itba.ppc.server.repository.PatientRepository;
 import ar.edu.itba.ppc.server.repository.RoomRepository;
-import ar.edu.itba.tp1g5.EmergencyCareResponse;
 import ar.edu.itba.tp1g5.EmergencyCareRequest;
-import ar.edu.itba.ppc.server.repository.DoctorRepository;
+import ar.edu.itba.tp1g5.EmergencyCareResponse;
 import ar.edu.itba.tp1g5.EmergencyCareServiceGrpc;
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
+
 import java.util.Comparator;
+import java.util.Objects;
 
 public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCareServiceImplBase{
     private final DoctorRepository doctorRepository;
@@ -29,27 +31,31 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
 
     @Override
     public void startEmergencyCare(EmergencyCareRequest request, StreamObserver<EmergencyCareResponse> responseObserver) {
-        EmergencyCareResponse reply = updateStatusForDoctor(request);
+        EmergencyCareResponse reply = updateStatusForDoctor(request, responseObserver);
         responseObserver.onNext(reply);
         responseObserver.onCompleted();
     }
 
     @Override
     public void endEmergencyCare(EmergencyCareRequest request, StreamObserver<EmergencyCareResponse> responseObserver) {
-        EmergencyCareResponse reply = updateStatusForEmergencyCare(request);
+        EmergencyCareResponse reply = updateStatusForEmergencyCare(request, responseObserver);
         responseObserver.onNext(reply);
         responseObserver.onCompleted();
     }
 
-    private synchronized EmergencyCareResponse updateStatusForDoctor(EmergencyCareRequest request) {
+    private synchronized EmergencyCareResponse updateStatusForDoctor(EmergencyCareRequest request, StreamObserver<EmergencyCareResponse> responseObserver) {
         Integer roomId = request.getRoom();
         Room room = roomRepository.getRooms().get(roomId);
 
-        if (room == null) {
-            throw new RoomDoesntExistsException(roomId);
+        if (Objects.isNull(room)) {
+            responseObserver.onError(Status.NOT_FOUND
+                    .withDescription("Room " + request.getRoom() + " doesn't exists")
+                    .asRuntimeException());
         }
-        if (room.getStatus().equals(AvailabilityDoctor.ATTENDING.getValue())) {
-            throw new RoomAlreadyOccupiedException(roomId);
+        if (room.getStatus().equals(EmergencyRoomStatus.OCCUPIED.getValue())) {
+            responseObserver.onError(Status.ALREADY_EXISTS
+                    .withDescription("Room " + request.getRoom() + " already occupied")
+                    .asRuntimeException());
         }
 
         Patient patient = patientRepository.getPatients().values().stream()
@@ -63,7 +69,7 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
                 .sorted(Comparator.comparing(Doctor::getLevel)
                         .thenComparing(Doctor::getDoctorName))
                 .findFirst()
-                .orElseThrow(() -> new NoAvailableDoctorException(roomId));
+                .orElseThrow(() -> new RuntimeException("No doctor found"));
 
         room.setStatus(EmergencyRoomStatus.OCCUPIED.getValue());
         availableDoctor.setRoom(roomId.toString());
@@ -79,12 +85,14 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
                 .build();
     }
 
-    private synchronized EmergencyCareResponse updateStatusForEmergencyCare(EmergencyCareRequest request) {
+    private synchronized EmergencyCareResponse updateStatusForEmergencyCare(EmergencyCareRequest request, StreamObserver<EmergencyCareResponse> responseObserver) {
         String doctorName = request.getDoctorName();
         Integer room = request.getRoom();
 
         if (!doctorRepository.getDoctors().containsKey(doctorName)) {
-            throw new DoctorDoesntExistsException(doctorName);
+            responseObserver.onError(Status.NOT_FOUND
+                    .withDescription("Doctor " + request.getDoctorName() + " doesn't exists")
+                    .asRuntimeException());
         }
 
         Doctor attendingDoctor = doctorRepository.getDoctors().get(doctorName);
@@ -92,7 +100,9 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
         Patient attendingPatient = patientRepository.getPatients().get(request.getPatientName());
 
         if (attendingDoctor.getRoom() == null || !attendingDoctor.getRoom().equals(room.toString())) {
-            throw new DoctorNotAssignedToRoomException(doctorName, room);
+            responseObserver.onError(Status.NOT_FOUND
+                    .withDescription("Doctor " + request.getDoctorName() + " not assigned to room #" + request.getRoom())
+                    .asRuntimeException());
         }
 
         attendingRoom.setStatus(EmergencyRoomStatus.FREE.getValue());
