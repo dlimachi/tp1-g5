@@ -20,7 +20,7 @@ public class Server {
     public static void main(String[] args) throws InterruptedException, IOException {
         logger.info(" Server Starting ...");
 
-        int port = 50052;
+        int port = 50051;
         DoctorRepository repository = new DoctorRepository();
         RoomRepository roomRepository = new RoomRepository();
         PatientRepository patientRepository = new PatientRepository();
