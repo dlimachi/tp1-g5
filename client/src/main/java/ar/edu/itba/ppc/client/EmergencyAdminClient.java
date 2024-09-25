@@ -3,6 +3,7 @@ package ar.edu.itba.ppc.client;
 import ar.edu.itba.ppc.client.utilsConsole.ClientArgs;
 import ar.edu.itba.ppc.client.utilsConsole.ClientCallback;
 import ar.edu.itba.tp1g5.*;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.protobuf.Empty;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -40,15 +41,15 @@ public class EmergencyAdminClient {
                 .usePlaintext()
                 .build();
         try {
-            emergencyAdminServiceGrpc.emergencyAdminServiceBlockingStub blockingStub =
-                emergencyAdminServiceGrpc.newBlockingStub(channel);
+            emergencyAdminServiceGrpc.emergencyAdminServiceFutureStub futureStub =
+                emergencyAdminServiceGrpc.newFutureStub(channel);
 
             switch (action) {
                 case "addRoom":
-                    //latch = new CountDownLatch(1);
-                    RoomResponse response = ClientCallback.executeHandling(() -> blockingStub.addRoom(Empty.newBuilder().build()));
+                    latch = new CountDownLatch(1);
+                    ListenableFuture<RoomResponse> response = ClientCallback.executeHandling(() -> futureStub.addRoom(Empty.newBuilder().build()));
                     if(Objects.nonNull(response))
-                        logger.info("Room {} added successfully", response.getRoom());
+                        logger.info("Room {} added successfully", response.get().getRoom());
                     break;
                 case "addDoctor":
                     if (level == null || doctorName == null) {
@@ -59,11 +60,12 @@ public class EmergencyAdminClient {
                             .setDoctorName(doctorName)
                             .setLevel(Integer.parseInt(level))
                             .build();
-                    DoctorResponse addResponse = ClientCallback.executeHandling(() -> blockingStub.addDoctor(addRequest));
+                    ListenableFuture<DoctorResponse> addResponse = ClientCallback.executeHandling(() -> futureStub.addDoctor(addRequest));
                     if(Objects.nonNull(addResponse))
-                        logger.info("Doctor {} ({}) added successfully", addResponse.getDoctorName(), addResponse.getLevel());
+                        logger.info("Doctor {} ({}) added successfully", addResponse.get().getDoctorName(), addResponse.get().getLevel());
                     break;
                 case "setDoctor":
+                    latch = new CountDownLatch(1);
                     if (doctorName == null || availability == null) {
                         logger.error("Doctor name and level are required for setDoctor action");
                         return;
@@ -72,11 +74,12 @@ public class EmergencyAdminClient {
                             .setDoctorName(doctorName)
                             .setAvailability(availability)
                             .build();
-                    DoctorResponse setResponse = ClientCallback.executeHandling(() -> blockingStub.setDoctor(setRequest));
+                    ListenableFuture<DoctorResponse> setResponse = ClientCallback.executeHandling(() -> futureStub.setDoctor(setRequest));
                     if(Objects.nonNull(setResponse))
-                        logger.info("Doctor {} ({}) is {}", setResponse.getDoctorName(), setResponse.getLevel(), setResponse.getAvailability());
+                        logger.info("Doctor {} ({}) is {}", setResponse.get().getDoctorName(), setResponse.get().getLevel(), setResponse.get().getAvailability());
                     break;
                 case "checkDoctor":
+                    latch = new CountDownLatch(1);
                     if (doctorName == null) {
                         logger.error("Doctor name is required for checkDoctor action");
                         return;
@@ -84,15 +87,15 @@ public class EmergencyAdminClient {
                     DoctorRequest checkRequest = DoctorRequest.newBuilder()
                             .setDoctorName(doctorName)
                             .build();
-                    DoctorResponse checkResponse = ClientCallback.executeHandling(() -> blockingStub.checkDoctor(checkRequest));
+                    ListenableFuture<DoctorResponse> checkResponse = ClientCallback.executeHandling(() -> futureStub.checkDoctor(checkRequest));
                     if(Objects.nonNull(checkResponse))
-                        logger.info("Doctor {} ({}) is {}", checkResponse.getDoctorName(), checkResponse.getLevel(), checkResponse.getAvailability());
+                        logger.info("Doctor {} ({}) is {}", checkResponse.get().getDoctorName(), checkResponse.get().getLevel(), checkResponse.get().getAvailability());
                     break;
             }
-            //latch.await();
+            latch.await();
 
     } catch (StatusRuntimeException e) {
-        logger.error("gRPC failed: {}", e.getStatus());
+        logger.error("gRPC failed: {}", e.getStatus().getDescription());
     } catch (Exception e) {
         logger.error("Unexpected error: ", e);
     } finally {
