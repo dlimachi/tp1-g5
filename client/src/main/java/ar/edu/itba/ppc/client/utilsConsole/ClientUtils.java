@@ -1,5 +1,9 @@
 package ar.edu.itba.ppc.client.utilsConsole;
 
+import com.opencsv.CSVParser;
+import com.opencsv.CSVParserBuilder;
+import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -7,8 +11,6 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import com.opencsv.*;
 
 public class ClientUtils {
     private static final Logger logger = LoggerFactory.getLogger(ClientUtils.class);
@@ -39,7 +41,7 @@ public class ClientUtils {
             throw new RuntimeException(String.format("File %s not found", path));
         }
         CSVParser parser = new CSVParserBuilder()
-                .withSeparator(';').build();
+                .withSeparator(',').build();
 
         try (CSVReader reader = new CSVReaderBuilder(fileReader)
                 .withSkipLines(1).withCSVParser(parser).build()) {
