@@ -1,6 +1,5 @@
 package ar.edu.itba.ppc.server;
 
-import ar.edu.itba.ppc.server.exceptions.GlobalExceptionHandlerInterceptor;
 import ar.edu.itba.ppc.server.repository.DoctorRepository;
 import ar.edu.itba.ppc.server.repository.PatientRepository;
 import ar.edu.itba.ppc.server.repository.RoomRepository;
@@ -30,7 +29,6 @@ public class Server {
                 .addService(new EmergencyCareService(repository, roomRepository, patientRepository))
                 .addService(new WaitingRoomService(patientRepository))
                 .addService(new QueryService(patientRepository))
-                .intercept(new GlobalExceptionHandlerInterceptor())
                 .build();
         server.start();
         logger.info("Server started, listening on " + port);
