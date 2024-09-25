@@ -1,18 +1,17 @@
 package ar.edu.itba.ppc.server;
 
-import ar.edu.itba.ppc.server.exceptions.GlobalExceptionHandlerInterceptor;
-import ar.edu.itba.ppc.server.repository.EmergencyAdminRepository;
+import ar.edu.itba.ppc.server.repository.DoctorRepository;
+import ar.edu.itba.ppc.server.repository.PatientRepository;
+import ar.edu.itba.ppc.server.repository.RoomRepository;
 import ar.edu.itba.ppc.server.service.EmergencyAdminService;
 import ar.edu.itba.ppc.server.service.EmergencyCareService;
-import io.grpc.BindableService;
+import ar.edu.itba.ppc.server.service.QueryService;
+import ar.edu.itba.ppc.server.service.WaitingRoomService;
 import io.grpc.ServerBuilder;
-import io.grpc.ServerInterceptors;
-import io.grpc.ServerServiceDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.function.Function;
 
 public class Server {
     private static Logger logger = LoggerFactory.getLogger(Server.class);
@@ -21,11 +20,15 @@ public class Server {
         logger.info(" Server Starting ...");
 
         int port = 50051;
-        EmergencyAdminRepository repository = new EmergencyAdminRepository();
+        DoctorRepository repository = new DoctorRepository();
+        RoomRepository roomRepository = new RoomRepository();
+        PatientRepository patientRepository = new PatientRepository();
+
         io.grpc.Server server = ServerBuilder.forPort(port)
-                .addService(new EmergencyAdminService(repository))
-                .addService(new EmergencyCareService(repository))
-                .intercept(new GlobalExceptionHandlerInterceptor())
+                .addService(new EmergencyAdminService(repository, roomRepository))
+                .addService(new EmergencyCareService(repository, roomRepository, patientRepository))
+                .addService(new WaitingRoomService(patientRepository))
+                .addService(new QueryService(patientRepository))
                 .build();
         server.start();
         logger.info("Server started, listening on " + port);
@@ -35,4 +38,5 @@ public class Server {
             server.shutdown();
             logger.info("Server shut down");
         }));
-    }}
+    }
+}

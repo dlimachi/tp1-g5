@@ -45,4 +45,5 @@ public class Doctor {
     public void setAvailability(String availability) {
         this.availability = availability;
     }
+
 }

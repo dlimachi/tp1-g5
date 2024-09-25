@@ -1,52 +1,95 @@
 package ar.edu.itba.ppc.client;
 
-import ar.edu.itba.tp1g5.*;
+import ar.edu.itba.ppc.client.utilsConsole.ClientArgs;
+import ar.edu.itba.ppc.client.utilsConsole.ClientCallback;
+import ar.edu.itba.tp1g5.EmergencyCareRequest;
+import ar.edu.itba.tp1g5.EmergencyCareResponse;
+import ar.edu.itba.tp1g5.EmergencyCareServiceGrpc;
+import com.google.protobuf.Empty;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.StatusRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
+import static ar.edu.itba.ppc.client.utilsConsole.ClientUtils.parseArgs;
 
 public class EmergencyCareClient {
     private static Logger logger = LoggerFactory.getLogger(EmergencyAdminClient.class);
+    private static CountDownLatch latch;
 
     public static void main(String[] args) throws InterruptedException {
-        logger.info("tp1-g5 Client Starting ...");
-        logger.info("grpc-com-patterns Client Starting ...");
-        ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 50051)
+        logger.info("tp1-g5 Emergency Care Client Starting ...");
+        logger.info("grpc-com-patterns Emergency Care Client Starting ...");
+        Map<String, String> argMap = parseArgs(args);
+        final String serverAddress = argMap.get(ClientArgs.SERVER_ADDRESS.getValue());
+        final String action = argMap.get(ClientArgs.ACTION.getValue());
+
+        ManagedChannel channel = ManagedChannelBuilder.forTarget(serverAddress)
                 .usePlaintext()
                 .build();
 
         try {
-            EmergencyCareServiceGrpc.EmergencyCareServiceBlockingStub futureStub =
+            EmergencyCareServiceGrpc.EmergencyCareServiceBlockingStub blockingStub =
                     EmergencyCareServiceGrpc.newBlockingStub(channel);
 
-            EmergencyCareRequest request = EmergencyCareRequest.newBuilder()
-                    .setRoom(1)
-                    .build();
+            switch (action) {
+                case "carePatient" -> {
+                    final String room = argMap.get(ClientArgs.ROOM.getValue());
+                    if (room == null) {
+                        logger.error("Room is required for carePatient action");
+                        return;
+                    }
+                    EmergencyCareRequest request = EmergencyCareRequest.newBuilder()
+                            .setRoom(Integer.parseInt(room))
+                            .build();
+                    EmergencyCareResponse response = ClientCallback.executeHandling(() -> blockingStub.startEmergencyCare(request));
+                    if (Objects.nonNull(response)) {
+                        logger.info("Patient {} ({}) and Doctor {} ({}) are now in Room #{}",
+                                response.getPatientName(), response.getPatientLevel(), response.getDoctorName(), response.getDoctorLevel(), response.getRoom());
+                    }
+                }
+                case "careAllPatient" -> {
+                    EmergencyCareResponse response = ClientCallback.executeHandling(() -> blockingStub.startAllEmergencyCare(Empty.newBuilder().build()));
+                    if (Objects.nonNull(response)) {
+                        logger.info("Patient {} ({}) and Doctor {} ({}) are now in Room #{}",
+                                response.getPatientName(), response.getPatientLevel(), response.getDoctorName(), response.getDoctorLevel(), response.getRoom());
+                    }
+                }
+                case "dischargePatient" -> {
+                    final String room = argMap.get(ClientArgs.ROOM.getValue());
+                    final String doctorName = argMap.get(ClientArgs.DOCTOR.getValue());
+                    final String patientName = argMap.get(ClientArgs.PATIENT.getValue());
 
-            EmergencyCareResponse reply = futureStub.startEmergencyCare(request);
-            System.out.println(reply.getRoom());
-            System.out.println(reply.getDoctorName());
-
-            EmergencyCareRequest request2 = EmergencyCareRequest.newBuilder()
-                    .setRoom(1)
-                    .setDoctorName("Dr. House")
-                    .setPatientName("patient")
-                    .build();
-
-            EmergencyCareResponse reply2 = futureStub.endEmergencyCare(request2);
-            System.out.println(reply2.getRoom());
-            System.out.println(reply2.getDoctorName());
-
-        }
-        catch (Exception e) {
-            logger.error("Error: " + e.getMessage());
-        }
-        finally {
-            channel.shutdown().awaitTermination(10, TimeUnit.SECONDS);
+                    if (room == null || doctorName == null || patientName == null) {
+                        logger.error("Room, doctorName and patientName are required for dischargePatient action");
+                        return;
+                    }
+                    EmergencyCareRequest request = EmergencyCareRequest.newBuilder()
+                            .setRoom(Integer.parseInt(room))
+                            .setDoctorName(doctorName)
+                            .setPatientName(patientName)
+                            .build();
+                    EmergencyCareResponse response = ClientCallback.executeHandling(() -> blockingStub.endEmergencyCare(request));
+                    if(Objects.nonNull(response)) {
+                        logger.info("Patient {} ({}) has been discharged from Doctor {} ({}) and the Room #{} is now {}",
+                                response.getPatientName(), response.getPatientLevel(), response.getDoctorName(), response.getDoctorLevel(), response.getRoom(), response.getRoomStatus());
+                    }
+                }
+            }
+        } catch (StatusRuntimeException e) {
+            logger.error("gRPC failed: {}", e.getStatus());
+        } catch (Exception e) {
+            logger.error("Unexpected error: ", e);
+        } finally {
+            channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
         }
     }
+
 }
 

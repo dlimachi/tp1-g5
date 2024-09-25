@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package administration;
+
+option java_package = "ar.edu.itba.tp1g5";
+option java_outer_classname = "QueryServiceModel";
+option java_multiple_files = true;
+
+service QueryService {
+  rpc QueryRooms(QueryRequest) returns (QueryRoomResponse);
+  rpc QueryWaitingRoom(QueryRequest) returns (QueryWaitingRoomResponse);
+  rpc QueryCares(QueryRequest) returns (QueryCareCompletedResponse);
+}
+
+message QueryRequest {
+  string path = 1;
+}
+
+message QueryRoomResponse {
+  repeated RoomStatus rooms = 1;
+}
+
+message RoomStatus {
+  int32 roomNumber = 1;
+  string roomStatus = 2;
+  string patientName = 3;
+  string patientLevel = 4;
+  string doctorName = 5;
+  string doctorLevel = 6;
+}
+
+message QueryWaitingRoomResponse {
+  repeated WaitingRoom waitingRooms = 1;
+}
+
+message WaitingRoom {
+  string patientName = 1;
+  string patientLevel = 2;
+}
+
+message QueryCareCompletedResponse {
+  repeated CareCompleted careCompleted = 1;
+}
+
+
+message CareCompleted {
+  int32 roomNumber = 1;
+  string patientName = 3;
+  string patientLevel = 4;
+  string doctorName = 5;
+  string doctorLevel = 6;
+}
+
