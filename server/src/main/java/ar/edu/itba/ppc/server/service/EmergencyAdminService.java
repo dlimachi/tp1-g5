@@ -38,9 +38,16 @@ public class EmergencyAdminService extends emergencyAdminServiceGrpc.emergencyAd
 
     @Override
     public void addDoctor(DoctorRequest request, StreamObserver<DoctorResponse> responseObserver) {
-        if (Objects.isNull(repository.getDoctor(request.getDoctorName())) || (request.getLevel() < 1 || request.getLevel() > 5)) {
+        if (Objects.nonNull(repository.getDoctor(request.getDoctorName()))) {
             responseObserver.onError(Status.ALREADY_EXISTS
                     .withDescription("Doctor " + request.getDoctorName() + " already exists")
+                    .asRuntimeException());
+            return;
+        }
+
+        if (request.getLevel() < 1 || request.getLevel() > 5) {
+            responseObserver.onError(Status.INVALID_ARGUMENT
+                    .withDescription("Invalid emergency level. Must be between 1 and 5.")
                     .asRuntimeException());
             return;
         }

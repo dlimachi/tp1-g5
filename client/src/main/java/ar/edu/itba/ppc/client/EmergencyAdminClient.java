@@ -64,7 +64,7 @@ public class EmergencyAdminClient {
                         logger.info("Doctor {} ({}) added successfully", addResponse.getDoctorName(), addResponse.getLevel());
                     break;
                 case "setDoctor":
-                    if (level == null || doctorName == null) {
+                    if (doctorName == null || availability == null) {
                         logger.error("Doctor name and level are required for setDoctor action");
                         return;
                     }

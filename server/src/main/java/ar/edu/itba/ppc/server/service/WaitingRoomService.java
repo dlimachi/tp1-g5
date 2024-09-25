@@ -8,6 +8,8 @@ import ar.edu.itba.tp1g5.WaitingRoomServiceGrpc;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 
+import java.util.Objects;
+
 public class WaitingRoomService extends WaitingRoomServiceGrpc.WaitingRoomServiceImplBase {
     private final PatientRepository patientRepository;
 
@@ -21,16 +23,23 @@ public class WaitingRoomService extends WaitingRoomServiceGrpc.WaitingRoomServic
         int level = request.getLevel();
 
         Patient existingPatient = patientRepository.getPatient(name);
-        if (existingPatient != null) {
+        if (Objects.nonNull(existingPatient)) {
             responseObserver.onError(Status.ALREADY_EXISTS
                     .withDescription("Patient already exists in the waiting room.")
                     .asRuntimeException());
             return;
         }
 
+        if (level < 1 || level > 5) {
+            responseObserver.onError(Status.INVALID_ARGUMENT
+                    .withDescription("Invalid emergency level. Must be between 1 and 5.")
+                    .asRuntimeException());
+            return;
+        }
+
         Patient createdPatient = patientRepository.addPatient(name, level);
 
-        if (createdPatient != null) {
+        if (Objects.nonNull(createdPatient)) {
             PatientResponse response = PatientResponse.newBuilder()
                     .setPatientName(createdPatient.getPatientName())
                     .setLevel(createdPatient.getEmergencyLevel())
@@ -59,7 +68,7 @@ public class WaitingRoomService extends WaitingRoomServiceGrpc.WaitingRoomServic
 
         Patient updatedPatient = patientRepository.updateEmergencyLevel(name, newLevel);
 
-        if (updatedPatient != null) {
+        if (Objects.nonNull(updatedPatient)) {
             PatientResponse response = PatientResponse.newBuilder()
                     .setPatientName(updatedPatient.getPatientName())
                     .setLevel(updatedPatient.getEmergencyLevel())
@@ -79,7 +88,7 @@ public class WaitingRoomService extends WaitingRoomServiceGrpc.WaitingRoomServic
         String name = request.getPatientName();
         Patient patient = patientRepository.getPatient(name);
 
-        if (patient == null) {
+        if (Objects.isNull(patient)) {
             responseObserver.onError(Status.NOT_FOUND
                     .withDescription("Patient not found in the waiting room.")
                     .asRuntimeException());
@@ -88,7 +97,7 @@ public class WaitingRoomService extends WaitingRoomServiceGrpc.WaitingRoomServic
 
         Integer patientsAhead = patientRepository.getPatientsAhead(name);
 
-        if (patientsAhead == null) {
+        if (Objects.isNull(patientsAhead)) {
             responseObserver.onError(Status.INTERNAL
                     .withDescription("Error calculating patients ahead.")
                     .asRuntimeException());

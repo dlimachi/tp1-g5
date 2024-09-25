@@ -61,15 +61,19 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
         Patient patient = patientRepository.getPatients().values().stream()
                 .sorted(Comparator.comparing(Patient::getEmergencyLevel).reversed()
                         .thenComparing(Patient::getArrivalTime))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("No patient found"));
+                .findFirst().orElse(null);
 
         Doctor availableDoctor = doctorRepository.getDoctors().values().stream()
                 .filter(doctor -> doctor.getAvailability().equals(AvailabilityDoctor.AVAILABLE.getValue()))
                 .sorted(Comparator.comparing(Doctor::getLevel)
                         .thenComparing(Doctor::getDoctorName))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("No doctor found"));
+                .findFirst().orElse(null);
+
+        if(Objects.isNull(patient) || Objects.isNull(availableDoctor)){
+            responseObserver.onError(Status.NOT_FOUND
+                    .withDescription("Room #" + request.getRoom() + " remains " + room.getStatus())
+                    .asRuntimeException());
+        }
 
         room.setStatus(EmergencyRoomStatus.OCCUPIED.getValue());
         availableDoctor.setRoom(roomId.toString());

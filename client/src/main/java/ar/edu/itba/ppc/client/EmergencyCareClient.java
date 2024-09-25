@@ -41,13 +41,17 @@ public class EmergencyCareClient {
             switch (action) {
                 case "carePatient" -> {
                     final String room = argMap.get(ClientArgs.ROOM.getValue());
+                    if (room == null) {
+                        logger.error("Room is required for carePatient action");
+                        return;
+                    }
                     EmergencyCareRequest request = EmergencyCareRequest.newBuilder()
                             .setRoom(Integer.parseInt(room))
                             .build();
                     EmergencyCareResponse response = ClientCallback.executeHandling(() -> blockingStub.startEmergencyCare(request));
                     if (Objects.nonNull(response)) {
-                        System.out.println(String.format("Patient %s (%d) and Doctor %s (%d) are now in Room #$d",
-                                response.getPatientName(), response.getPatientLevel(), response.getDoctorName(), response.getDoctorLevel(), response.getRoom()));
+                        logger.info("Patient {} ({}) and Doctor {} ({}) are now in Room #{}",
+                                response.getPatientName(), response.getPatientLevel(), response.getDoctorName(), response.getDoctorLevel(), response.getRoom());
                     }
                 }
                 case "careAllPatient" -> {
@@ -62,6 +66,11 @@ public class EmergencyCareClient {
                     final String room = argMap.get(ClientArgs.ROOM.getValue());
                     final String doctorName = argMap.get(ClientArgs.DOCTOR.getValue());
                     final String patientName = argMap.get(ClientArgs.PATIENT.getValue());
+
+                    if (room == null || doctorName == null || patientName == null) {
+                        logger.error("Room, doctorName and patientName are required for dischargePatient action");
+                        return;
+                    }
                     EmergencyCareRequest request = EmergencyCareRequest.newBuilder()
                             .setRoom(Integer.parseInt(room))
                             .setDoctorName(doctorName)
@@ -69,8 +78,8 @@ public class EmergencyCareClient {
                             .build();
                     EmergencyCareResponse response = ClientCallback.executeHandling(() -> blockingStub.endEmergencyCare(request));
                     if(Objects.nonNull(response)) {
-                        System.out.println(String.format("Patient %d (%d) has been discharged from Doctor %s (%d) and the Room #$d is now %d",
-                                response.getPatientName(), response.getPatientLevel(), response.getDoctorName(), response.getDoctorLevel(), response.getRoom(), response.getRoomStatus()));
+                        logger.info("Patient {} ({}) has been discharged from Doctor {} ({}) and the Room #{} is now {}",
+                                response.getPatientName(), response.getPatientLevel(), response.getDoctorName(), response.getDoctorLevel(), response.getRoom(), response.getRoomStatus());
                     }
                 }
             }
