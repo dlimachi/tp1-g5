@@ -22,10 +22,13 @@ public class PatientRepository {
      * Agrega un nuevo paciente al repositorio.
      * Usa un write lock para asegurar que la operación sea atómica.
      */
-    public boolean addPatient(Patient patient) {
+    public Patient addPatient(Patient patient) {
         rwLock.writeLock().lock();
         try {
-            return patients.putIfAbsent(patient.getPatientName(), patient) == null;
+            if (patients.putIfAbsent(patient.getPatientName(), patient) == null) {
+                return patient;
+            }
+            return null; // Patient already exists
         } finally {
             rwLock.writeLock().unlock();
         }
@@ -43,15 +46,15 @@ public class PatientRepository {
      * Actualiza el nivel de emergencia de un paciente.
      * Usa un write lock para asegurar que la actualización sea atómica.
      */
-    public boolean updateEmergencyLevel(String patientName, int newLevel) {
+    public Patient updateEmergencyLevel(String patientName, int newLevel) {
         rwLock.writeLock().lock();
         try {
             Patient patient = patients.get(patientName);
             if (patient != null) {
                 patient.setEmergencyLevel(newLevel);
-                return true;
+                return patient;
             }
-            return false;
+            return null;
         } finally {
             rwLock.writeLock().unlock();
         }
@@ -61,12 +64,12 @@ public class PatientRepository {
      * Calcula cuántos pacientes están delante en la lista de espera.
      * Usa un read lock para asegurar una vista consistente de todos los pacientes durante el cálculo.
      */
-    public int getPatientsAhead(String patientName) {
+    public Patient getPatientsAhead(String patientName) {
         rwLock.readLock().lock();
         try {
             Patient patient = patients.get(patientName);
             if (patient == null) {
-                return -1; // Patient not found
+                return null; // Patient not found
             }
 
             List<Patient> patientList = new ArrayList<>(patients.values());
@@ -74,7 +77,8 @@ public class PatientRepository {
                     .comparing(Patient::getEmergencyLevel).reversed()
                     .thenComparing(Patient::getArrivalTime));
 
-            return patientList.indexOf(patient);
+            int position = patientList.indexOf(patient);
+            return patient;
         } finally {
             rwLock.readLock().unlock();
         }
@@ -84,10 +88,10 @@ public class PatientRepository {
      * Elimina un paciente del repositorio.
      * Usa un write lock para asegurar que la eliminación sea atómica.
      */
-    public boolean removePatient(String patientName) {
+    public Patient removePatient(String patientName) {
         rwLock.writeLock().lock();
         try {
-            return patients.remove(patientName) != null;
+            return patients.remove(patientName);
         } finally {
             rwLock.writeLock().unlock();
         }

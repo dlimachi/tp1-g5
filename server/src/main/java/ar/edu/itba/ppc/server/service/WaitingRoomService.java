@@ -8,6 +8,8 @@ import ar.edu.itba.tp1g5.WaitingRoomServiceGrpc;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 
+import java.util.List;
+
 public class WaitingRoomService extends WaitingRoomServiceGrpc.WaitingRoomServiceImplBase {
     private final PatientRepository patientRepository;
 
@@ -20,16 +22,20 @@ public class WaitingRoomService extends WaitingRoomServiceGrpc.WaitingRoomServic
         String name = request.getPatientName();
         int level = request.getLevel();
 
-        boolean created = patientRepository.addPatient(new Patient(request.getPatientName(), request.getLevel()));
+        Patient createdPatient = patientRepository.addPatient(new Patient(name, level));
 
-        if(created) {
+        if(createdPatient != null) {
             PatientResponse response = PatientResponse.newBuilder()
-                    .setPatientName(name)
-                    .setLevel(level)
+                    .setPatientName(createdPatient.getPatientName())
+                    .setLevel(createdPatient.getEmergencyLevel())
                     .build();
 
             responseObserver.onNext(response);
             responseObserver.onCompleted();
+        } else {
+            responseObserver.onError(Status.ALREADY_EXISTS
+                    .withDescription("Patient already exists in the waiting room.")
+                    .asRuntimeException());
         }
     }
 
@@ -45,85 +51,48 @@ public class WaitingRoomService extends WaitingRoomServiceGrpc.WaitingRoomServic
             return;
         }
 
-        if (!patientRepository.updateEmergencyLevel(name, newLevel)) {
+        Patient updatedPatient = patientRepository.updateEmergencyLevel(name, newLevel);
+
+        if (updatedPatient != null) {
+            PatientResponse response = PatientResponse.newBuilder()
+                    .setPatientName(updatedPatient.getPatientName())
+                    .setLevel(updatedPatient.getEmergencyLevel())
+                    .build();
+
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        } else {
             responseObserver.onError(Status.NOT_FOUND
                     .withDescription("Patient not found in the waiting room.")
                     .asRuntimeException());
-            return;
         }
-
-        PatientResponse response = PatientResponse.newBuilder()
-                .setPatientName(name)
-                .setLevel(newLevel)
-                .build();
-
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
     }
 
     @Override
     public void checkWaitingList(PatientRequest request, StreamObserver<PatientResponse> responseObserver) {
         String name = request.getPatientName();
-        Patient patient = patientRepository.getPatient(name);
+        Patient patient = patientRepository.getPatientsAhead(name);
 
-        if (patient == null) {
+        if (patient != null) {
+            List<Patient> allPatients = patientRepository.getAllPatients();
+            int patientsAhead = (int) allPatients.stream()
+                    .filter(p -> p.getEmergencyLevel() > patient.getEmergencyLevel() ||
+                            (p.getEmergencyLevel().equals(patient.getEmergencyLevel()) &&
+                                    p.getArrivalTime().isBefore(patient.getArrivalTime())))
+                    .count();
+
+            PatientResponse response = PatientResponse.newBuilder()
+                    .setPatientName(patient.getPatientName())
+                    .setLevel(patient.getEmergencyLevel())
+                    .setWaitingPatient(patientsAhead)
+                    .build();
+
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        } else {
             responseObserver.onError(Status.NOT_FOUND
                     .withDescription("Patient not found in the waiting room.")
                     .asRuntimeException());
-            return;
         }
-
-        int patientsAhead = patientRepository.getPatientsAhead(name);
-
-        PatientResponse response = PatientResponse.newBuilder()
-                .setPatientName(name)
-                .setLevel(patient.getEmergencyLevel())
-                .setWaitingPatient(patientsAhead)
-                .build();
-
-        responseObserver.onNext(response);
-        responseObserver.onCompleted();
     }
 }
-
-/* package ar.edu.itba.ppc.server.service;
-
-import ar.edu.itba.ppc.server.repository.PatientRepository;
-import ar.edu.itba.tp1g5.EmergencyCareResponse;
-import ar.edu.itba.tp1g5.PatientRequest;
-import ar.edu.itba.tp1g5.PatientResponse;
-import ar.edu.itba.tp1g5.WaitingRoomServiceGrpc;
-import io.grpc.stub.StreamObserver;
-
-public class WaitingRoomService extends WaitingRoomServiceGrpc.WaitingRoomServiceImplBase {
-   // private final PatientRepository patientRepository;
-
-
-    @Override
-    public void registerPatient(PatientRequest request, StreamObserver<PatientResponse> responseObserver) {
-        String name = request.getPatientName();
-        Integer level = request.getLevel();
-
-
-        // Debo construir la response con Builder que es un objeto.
-        PatientResponse.Builder patientResponseBuilder = PatientResponse.newBuilder();
-        patientResponseBuilder.setPatientName(name).setLevel(level);
-
-
-        //Luego debo mandarle la respuesta nvamente al cliente mediante el responseObserver
-        responseObserver.onNext(patientResponseBuilder.build());
-        // Debemos cerrar la llamada
-        responseObserver.onCompleted();
-    }
-
-
-    @Override
-    public void updateEmergencyLevel(PatientRequest request, StreamObserver<PatientResponse> responseObserver) {
-    }
-
-    @Override
-    public void checkWaitingList(PatientRequest request, StreamObserver<PatientResponse> responseObserver) {
-    }
-}
-
- */
