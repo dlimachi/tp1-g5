@@ -31,7 +31,7 @@ public class EmergencyAdminClient {
         ManagedChannel channel = ManagedChannelBuilder.forTarget(serverAddress)
                 .usePlaintext()
                 .build();
-
+        try {
         emergencyAdminServiceGrpc.emergencyAdminServiceBlockingStub blockingStub =
                 emergencyAdminServiceGrpc.newBlockingStub(channel);
 
@@ -79,17 +79,17 @@ public class EmergencyAdminClient {
 
         }
 
-        try {
-            DoctorRequest request = DoctorRequest.newBuilder()
-                    .setDoctorName("John")
-                    .setLevel(1)
-                    .build();
-            DoctorResponse reply2 = blockingStub.addDoctor(request);
 
-            System.out.println(reply2.getDoctorName());
-            System.out.println(reply2.getLevel());
-            logger.info("Waiting for response...");
-            latch.await();
+//            DoctorRequest request = DoctorRequest.newBuilder()
+//                    .setDoctorName("John")
+//                    .setLevel(1)
+//                    .build();
+//            DoctorResponse reply2 = blockingStub.addDoctor(request);
+//
+//            System.out.println(reply2.getDoctorName());
+//            System.out.println(reply2.getLevel());
+//            logger.info("Waiting for response...");
+//            latch.await();
         }
         catch (RuntimeException e) {
             logger.error("Error: " + e.getMessage());

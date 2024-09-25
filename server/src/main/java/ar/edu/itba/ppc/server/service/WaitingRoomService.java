@@ -74,7 +74,7 @@ public class WaitingRoomService extends WaitingRoomServiceGrpc.WaitingRoomServic
         Patient patient = patientRepository.getPatientsAhead(name);
 
         if (patient != null) {
-            List<Patient> allPatients = patientRepository.getAllPatients();
+            List<Patient> allPatients = patientRepository.getPatients().values().stream().toList();
             int patientsAhead = (int) allPatients.stream()
                     .filter(p -> p.getEmergencyLevel() > patient.getEmergencyLevel() ||
                             (p.getEmergencyLevel().equals(patient.getEmergencyLevel()) &&
