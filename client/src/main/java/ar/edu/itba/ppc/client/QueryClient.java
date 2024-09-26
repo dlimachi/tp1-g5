@@ -47,7 +47,7 @@ public class QueryClient {
                 case "queryRooms" -> {
                     QueryRequest request = QueryRequest.newBuilder().setPath(outPath).build();
                     QueryRoomResponse response = ClientCallback.executeHandling(() -> blockingStub.queryRooms(request));
-                    if (Objects.nonNull(response)) {
+                    if (Objects.nonNull(response) && !response.getRoomsList().isEmpty()) {
                         CreateQuerys.queryRoomStatusFile(response.getRoomsList(), outPath);
                         ClientUtils.getCSVData(outPath);
                     }
@@ -56,14 +56,14 @@ public class QueryClient {
                     QueryRequest request = QueryRequest.newBuilder().setPath(outPath).build();
                     QueryWaitingRoomResponse response = ClientCallback.executeHandling(() -> blockingStub.queryWaitingRoom(request));
 
-                    if (Objects.nonNull(response)) {
+                    if (Objects.nonNull(response) && !response.getWaitingRoomsList().isEmpty()) {
                         CreateQuerys.queryWaitingRoomFile(response.getWaitingRoomsList(), outPath);
                         ClientUtils.getCSVData(outPath);
                     }
                 }
                 case "queryCares" -> {
                     QueryRequest.Builder requestBuilder = QueryRequest.newBuilder().setPath(outPath);
-                    if (room != null && !room.isEmpty()) {
+                    if (Objects.nonNull(room)) {
                         requestBuilder.setRoom(Integer.parseInt(room));
                         logger.info("Filtering cares for room: {}", room);
                     } else {
@@ -72,7 +72,7 @@ public class QueryClient {
                     QueryRequest request = requestBuilder.build();
                     QueryCareCompletedResponse response = ClientCallback.executeHandling(() -> blockingStub.queryCares(request));
 
-                    if (Objects.nonNull(response)) {
+                    if (Objects.nonNull(response) && !response.getCareCompletedList().isEmpty()) {
                         CreateQuerys.queryCaresFile(response.getCareCompletedList(), outPath);
                         ClientUtils.getCSVData(outPath);
                     }
