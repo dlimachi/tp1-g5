@@ -13,14 +13,12 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static ar.edu.itba.ppc.client.utilsConsole.ClientUtils.parseArgs;
 
 public class QueryClient {
-    private static Logger logger = LoggerFactory.getLogger(EmergencyAdminClient.class);
-    private static CountDownLatch latch;
+    private static Logger logger = LoggerFactory.getLogger(QueryClient.class);
 
     public static void main(String[] args) throws InterruptedException {
         logger.info("tp1-g5 Query Client Starting ...");
@@ -29,6 +27,12 @@ public class QueryClient {
         final String serverAddress = argMap.get(ClientArgs.SERVER_ADDRESS.getValue());
         final String action = argMap.get(ClientArgs.ACTION.getValue());
         final String outPath = argMap.get(ClientArgs.OUT_PATH.getValue());
+        final String room = argMap.get(ClientArgs.ROOM.getValue());
+
+        logger.info("Server Address: {}", serverAddress);
+        logger.info("Action: {}", action);
+        logger.info("Output Path: {}", outPath);
+        logger.info("Room: {}", room);
 
         ManagedChannel channel = ManagedChannelBuilder.forTarget(serverAddress)
                 .usePlaintext()
@@ -42,6 +46,7 @@ public class QueryClient {
                     QueryRequest request = QueryRequest.newBuilder().setPath(outPath).build();
                     QueryRoomResponse response = ClientCallback.executeHandling(() -> blockingStub.queryRooms(request));
                     if (Objects.nonNull(response)) {
+                        logger.info("Received response for queryRooms");
                         CreateQuerys.queryRoomStatusFile(response.getRoomsList(), outPath);
                         ClientUtils.getCSVData(outPath);
                     }
@@ -51,18 +56,29 @@ public class QueryClient {
                     QueryWaitingRoomResponse response = ClientCallback.executeHandling(() -> blockingStub.queryWaitingRoom(request));
 
                     if (Objects.nonNull(response)) {
+                        logger.info("Received response for queryWaitingRoom");
                         CreateQuerys.queryWaitingRoomFile(response.getWaitingRoomsList(), outPath);
                         ClientUtils.getCSVData(outPath);
                     }
                 }
                 case "queryCares" -> {
-                    latch = new CountDownLatch(1);
-                    QueryRequest request = QueryRequest.newBuilder().setPath(outPath).build();
+                    QueryRequest.Builder requestBuilder = QueryRequest.newBuilder().setPath(outPath);
+                    if (room != null && !room.isEmpty()) {
+                        requestBuilder.setRoom(Integer.parseInt(room));
+                        logger.info("Filtering cares for room: {}", room);
+                    } else {
+                        logger.info("Querying all completed cares");
+                    }
+                    QueryRequest request = requestBuilder.build();
                     QueryCareCompletedResponse response = ClientCallback.executeHandling(() -> blockingStub.queryCares(request));
 
                     if (Objects.nonNull(response)) {
+                        logger.info("Received {} completed cares", response.getCareCompletedCount());
                         CreateQuerys.queryCaresFile(response.getCareCompletedList(), outPath);
+                        logger.info("CSV file created at: {}", outPath);
                         ClientUtils.getCSVData(outPath);
+                    } else {
+                        logger.warn("No response received from queryCares");
                     }
                 }
                 default -> logger.error("Unknown action: " + action);
@@ -72,7 +88,7 @@ public class QueryClient {
             logger.error("gRPC failed: {}", e.getStatus());
         }
         catch (Exception e) {
-            logger.error("Error: " + e.getMessage());
+            logger.error("Error: " + e.getMessage(), e);
         }
         finally {
             channel.shutdown().awaitTermination(10, TimeUnit.SECONDS);

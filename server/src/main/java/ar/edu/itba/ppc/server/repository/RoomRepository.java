@@ -3,9 +3,12 @@ package ar.edu.itba.ppc.server.repository;
 import ar.edu.itba.ppc.server.constants.EmergencyRoomStatus;
 import ar.edu.itba.ppc.server.model.Room;
 
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
 
 public class RoomRepository {
     private final ConcurrentHashMap<Integer, Room> rooms;

@@ -9,9 +9,7 @@ import ar.edu.itba.ppc.server.model.Room;
 import ar.edu.itba.ppc.server.repository.DoctorRepository;
 import ar.edu.itba.ppc.server.repository.PatientRepository;
 import ar.edu.itba.ppc.server.repository.RoomRepository;
-import ar.edu.itba.tp1g5.EmergencyCareResponse;
-import ar.edu.itba.tp1g5.EmergencyCareRequest;
-import ar.edu.itba.tp1g5.EmergencyCareServiceGrpc;
+import ar.edu.itba.tp1g5.*;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import com.google.protobuf.Empty;
@@ -28,7 +26,6 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
     private final PatientRepository patientRepository;
     private final ConcurrentLinkedQueue<EmergencyCareResponse> completedCares;
 
-
     public EmergencyCareService(DoctorRepository doctorRepository, RoomRepository roomRepository, PatientRepository patientRepository) {
         this.doctorRepository = doctorRepository;
         this.roomRepository = roomRepository;
@@ -38,21 +35,43 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
 
     @Override
     public void startEmergencyCare(EmergencyCareRequest request, StreamObserver<EmergencyCareResponse> responseObserver) {
-        EmergencyCareResponse reply = updateMedicalAttention(request, responseObserver);
-        responseObserver.onNext(reply);
-        responseObserver.onCompleted();
+        EmergencyCareResponse reply = updateStatusForDoctor(request);
+        if (reply != null) {
+            responseObserver.onNext(reply);
+            responseObserver.onCompleted();
+        }
     }
 
     @Override
     public void startAllEmergencyCare(Empty request, StreamObserver<EmergencyCareListResponse> responseObserver) {
-        List<EmergencyCareResponse> replies = startEmergencyCareInFreeRooms(responseObserver);
-        responseObserver.onNext(EmergencyCareListResponse.newBuilder().addAllEmergencyCareList(replies).build());
+        List<Room> freeRooms = roomRepository.getRooms().values().stream()
+                .filter(room -> room.getStatus().equals(EmergencyRoomStatus.FREE.getValue()))
+                .sorted(Comparator.comparing(Room::getRoom))
+                .toList();
+
+        List<EmergencyCareResponse> responses = new ArrayList<>();
+
+        for (Room room : freeRooms) {
+            EmergencyCareRequest careRequest = EmergencyCareRequest.newBuilder()
+                    .setRoom(room.getRoom())
+                    .build();
+            EmergencyCareResponse response = updateStatusForDoctor(careRequest);
+            if (response != null) {
+                responses.add(response);
+            }
+        }
+
+        EmergencyCareListResponse listResponse = EmergencyCareListResponse.newBuilder()
+                .addAllEmergencyCareList(responses)
+                .build();
+
+        responseObserver.onNext(listResponse);
         responseObserver.onCompleted();
     }
 
     @Override
     public void endEmergencyCare(EmergencyCareRequest request, StreamObserver<EmergencyCareResponse> responseObserver) {
-        EmergencyCareResponse reply = updateStatusForEmergencyCare(request, responseObserver);
+        EmergencyCareResponse reply = updateStatusForEmergencyCare(request);
         if (reply != null) {
             responseObserver.onNext(reply);
             responseObserver.onCompleted();
@@ -60,61 +79,59 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
         }
     }
 
-    private synchronized List<EmergencyCareResponse> startEmergencyCareInFreeRooms(StreamObserver<EmergencyCareListResponse> responseObserver) {
-        List<Room> freeRooms = roomRepository.getFreeRooms();
-
-        Patient patient = patientRepository.getUrgentPatient();
-
-        Doctor doctor = doctorRepository.getAvailableDoctor();
-
-        if(freeRooms.isEmpty() && Objects.isNull(patient) && Objects.isNull(doctor)) {
-            return null;
-        }
-
-        return freeRooms.stream()
-                .map(room -> createResponse(patient, room, doctor))
-                .collect(Collectors.toList());
-    }
-
-    private synchronized EmergencyCareResponse updateMedicalAttention(EmergencyCareRequest request, StreamObserver<EmergencyCareResponse> responseObserver) {
+    private synchronized EmergencyCareResponse updateStatusForDoctor(EmergencyCareRequest request) {
         Integer roomId = request.getRoom();
         Room room = roomRepository.getRooms().get(roomId);
 
         if (Objects.isNull(room)) {
-            responseObserver.onError(Status.NOT_FOUND
-                    .withDescription("Room " + request.getRoom() + " doesn't exist")
-                    .asRuntimeException());
             return null;
         }
         if (room.getStatus().equals(EmergencyRoomStatus.OCCUPIED.getValue())) {
-            responseObserver.onError(Status.ALREADY_EXISTS
-                    .withDescription("Room " + request.getRoom() + " already occupied")
-                    .asRuntimeException());
             return null;
         }
 
-        Patient patient = patientRepository.getUrgentPatient();
+        Patient patient = patientRepository.getPatients().values().stream()
+                .filter(p -> p.getStatus().equals(StatusPatient.WAITING.getValue()) && p.getCurrentRoom() == null)
+                .sorted(Comparator.comparing(Patient::getEmergencyLevel).reversed()
+                        .thenComparing(Patient::getArrivalTime))
+                .findFirst()
+                .orElse(null);
 
-        Doctor availableDoctor = doctorRepository.getAvailableDoctor();
-
-        if(Objects.isNull(patient) || Objects.isNull(availableDoctor)) {
-            responseObserver.onError(Status.NOT_FOUND
-                    .withDescription("Room #" + request.getRoom() + " remains " + room.getStatus())
-                    .asRuntimeException());
+        if (patient == null) {
             return null;
         }
 
-        return createResponse(patient, room, availableDoctor);
+        Doctor availableDoctor = doctorRepository.getDoctors().values().stream()
+                .filter(doctor -> doctor.getAvailability().equals(AvailabilityDoctor.AVAILABLE.getValue()) && doctor.getRoom() == null)
+                .min(Comparator.comparing(Doctor::getLevel)
+                        .thenComparing(Doctor::getDoctorName))
+                .orElse(null);
+
+        if (availableDoctor == null) {
+            return null;
+        }
+
+        room.setStatus(EmergencyRoomStatus.OCCUPIED.getValue());
+        availableDoctor.setRoom(roomId.toString());
+        availableDoctor.setAvailability(AvailabilityDoctor.ATTENDING.getValue());
+        patient.setStatus(StatusPatient.ATTENDING.getValue());
+        patient.setCurrentRoom(roomId);
+
+        return EmergencyCareResponse.newBuilder()
+                .setRoom(room.getRoom())
+                .setDoctorName(availableDoctor.getDoctorName())
+                .setDoctorLevel(availableDoctor.getLevel())
+                .setPatientName(patient.getPatientName())
+                .setPatientLevel(patient.getEmergencyLevel())
+                .setRoomStatus(EmergencyRoomStatus.OCCUPIED.getValue())
+                .build();
     }
 
-    private synchronized EmergencyCareResponse updateStatusForEmergencyCare(EmergencyCareRequest request, StreamObserver<EmergencyCareResponse> responseObserver) {
+    private synchronized EmergencyCareResponse updateStatusForEmergencyCare(EmergencyCareRequest request) {
         String doctorName = request.getDoctorName();
         Integer room = request.getRoom();
 
         if (!doctorRepository.getDoctors().containsKey(doctorName)) {
-            responseObserver.onError(Status.NOT_FOUND
-                    .withDescription("Doctor " + request.getDoctorName() + " doesn't exist")
-                    .asRuntimeException());
             return null;
         }
 
@@ -123,9 +140,6 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
         Patient attendingPatient = patientRepository.getPatients().get(request.getPatientName());
 
         if (attendingDoctor.getRoom() == null || !attendingDoctor.getRoom().equals(room.toString())) {
-            responseObserver.onError(Status.NOT_FOUND
-                    .withDescription("Doctor " + request.getDoctorName() + " not assigned to room #" + request.getRoom())
-                    .asRuntimeException());
             return null;
         }
 
@@ -133,6 +147,7 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
         attendingDoctor.setAvailability(AvailabilityDoctor.AVAILABLE.getValue());
         attendingDoctor.setRoom(null);
         attendingPatient.setStatus(StatusPatient.COMPLETED.getValue());
+        attendingPatient.setCurrentRoom(null);
 
         return EmergencyCareResponse.newBuilder()
                 .setDoctorName(attendingDoctor.getDoctorName())
@@ -141,21 +156,6 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
                 .setPatientName(attendingPatient.getPatientName())
                 .setPatientLevel(attendingPatient.getEmergencyLevel())
                 .setRoomStatus(attendingRoom.getStatus())
-                .build();
-    }
-
-    private EmergencyCareResponse createResponse(Patient patient, Room room, Doctor doctor) {
-        room.setStatus(EmergencyRoomStatus.OCCUPIED.getValue());
-        doctor.setRoom(room.getRoom().toString());
-        doctor.setAvailability(AvailabilityDoctor.ATTENDING.getValue());
-        patient.setStatus(StatusPatient.ATTENDING.getValue());
-
-        return EmergencyCareResponse.newBuilder()
-                .setRoom(room.getRoom())
-                .setDoctorName(doctor.getDoctorName())
-                .setDoctorLevel(doctor.getLevel())
-                .setPatientName(patient.getPatientName())
-                .setPatientLevel(patient.getEmergencyLevel())
                 .build();
     }
 

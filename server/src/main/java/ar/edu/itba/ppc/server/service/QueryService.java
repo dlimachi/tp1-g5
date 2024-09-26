@@ -63,7 +63,7 @@ public class QueryService extends QueryServiceGrpc.QueryServiceImplBase {
                     .orElse(null);
 
             Patient attendingPatient = patientRepository.getPatients().values().stream()
-                    .filter(p -> p.getStatus().equals(StatusPatient.ATTENDING.getValue()))
+                    .filter(p -> p.getCurrentRoom() != null && p.getCurrentRoom().equals(room.getRoom()))
                     .findFirst()
                     .orElse(null);
 
@@ -83,7 +83,9 @@ public class QueryService extends QueryServiceGrpc.QueryServiceImplBase {
 
     @Override
     public void queryWaitingRoom(QueryRequest request, StreamObserver<QueryWaitingRoomResponse> responseObserver) {
-        if(patientRepository.getPatients().isEmpty()) {
+        List<Patient> waitingPatients = patientRepository.getWaitingPatientsInOrder();
+
+        if(waitingPatients.isEmpty()) {
             responseObserver.onError(
                     Status.FAILED_PRECONDITION
                             .withDescription("There are no patients in the waiting room.")
@@ -92,7 +94,7 @@ public class QueryService extends QueryServiceGrpc.QueryServiceImplBase {
             return;
         }
 
-        List<WaitingRoom> patientsWaiting = patientRepository.getWaitingPatientsInOrder().stream()
+        List<WaitingRoom> patientsWaiting = waitingPatients.stream()
                 .map(patient -> WaitingRoom.newBuilder()
                         .setPatientName(patient.getPatientName())
                         .setPatientLevel(patient.getEmergencyLevel().toString())
@@ -119,9 +121,28 @@ public class QueryService extends QueryServiceGrpc.QueryServiceImplBase {
             return;
         }
 
-        List<CareCompleted> careCompletedList = completedCares.stream()
-                .map(this::mapEmergencyCareResponseToCareCompleted)
-                .collect(Collectors.toList());
+        List<CareCompleted> careCompletedList;
+        if (request.getRoom() != 0) {
+            // Filtrar por habitación específica si se proporciona
+            careCompletedList = completedCares.stream()
+                    .filter(care -> care.getRoom() == request.getRoom())
+                    .map(this::mapEmergencyCareResponseToCareCompleted)
+                    .collect(Collectors.toList());
+
+            if (careCompletedList.isEmpty()) {
+                responseObserver.onError(
+                        Status.NOT_FOUND
+                                .withDescription("No completed cares found for room " + request.getRoom())
+                                .asRuntimeException()
+                );
+                return;
+            }
+        } else {
+            // Si no se proporciona habitación, devolver todas las atenciones completadas
+            careCompletedList = completedCares.stream()
+                    .map(this::mapEmergencyCareResponseToCareCompleted)
+                    .collect(Collectors.toList());
+        }
 
         QueryCareCompletedResponse response = QueryCareCompletedResponse.newBuilder()
                 .addAllCareCompleted(careCompletedList)

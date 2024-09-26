@@ -2,6 +2,7 @@ package ar.edu.itba.ppc.client;
 
 import ar.edu.itba.ppc.client.utilsConsole.ClientArgs;
 import ar.edu.itba.ppc.client.utilsConsole.ClientCallback;
+import ar.edu.itba.tp1g5.EmergencyCareListResponse;
 import ar.edu.itba.tp1g5.EmergencyCareRequest;
 import ar.edu.itba.tp1g5.EmergencyCareResponse;
 import ar.edu.itba.tp1g5.EmergencyCareServiceGrpc;
