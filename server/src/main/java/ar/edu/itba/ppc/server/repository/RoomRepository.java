@@ -41,4 +41,9 @@ public class RoomRepository {
                 .sorted(Comparator.comparing(Room::getRoom))
                 .collect(Collectors.toList());
     }
+
+    public Room getRoom(Integer room) {
+        return rooms.get(room);
+    }
+
 }

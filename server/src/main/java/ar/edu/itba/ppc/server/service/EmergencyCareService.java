@@ -66,11 +66,7 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
 
         Patient patient = patientRepository.getUrgentPatient();
 
-        Doctor doctor = doctorRepository.getAvailableDoctor();
-
-        if(freeRooms.isEmpty() && Objects.isNull(patient) && Objects.isNull(doctor)) {
-            return null;
-        }
+        Doctor doctor = doctorRepository.getAvailableDoctor(patient.getEmergencyLevel());
 
         return freeRooms.stream()
                 .map(room -> createResponse(patient, room, doctor))
@@ -96,9 +92,16 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
 
         Patient patient = patientRepository.getUrgentPatient();
 
-        Doctor availableDoctor = doctorRepository.getAvailableDoctor();
+        if(Objects.isNull(patient)) {
+            responseObserver.onError(Status.NOT_FOUND
+                    .withDescription("Room #" + request.getRoom() + " remains " + room.getStatus())
+                    .asRuntimeException());
+            return null;
+        }
 
-        if(Objects.isNull(patient) || Objects.isNull(availableDoctor)) {
+        Doctor availableDoctor = doctorRepository.getAvailableDoctor(patient.getEmergencyLevel());
+
+        if(Objects.isNull(availableDoctor)) {
             responseObserver.onError(Status.NOT_FOUND
                     .withDescription("Room #" + request.getRoom() + " remains " + room.getStatus())
                     .asRuntimeException());
@@ -147,7 +150,7 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
 
     private EmergencyCareResponse createResponse(Patient patient, Room room, Doctor doctor) {
         room.setStatus(EmergencyRoomStatus.OCCUPIED.getValue());
-        doctor.setRoom(room.getRoom().toString());
+        doctor.setRoom(room.getRoom());
         doctor.setAvailability(AvailabilityDoctor.ATTENDING.getValue());
         patient.setStatus(StatusPatient.ATTENDING.getValue());
 

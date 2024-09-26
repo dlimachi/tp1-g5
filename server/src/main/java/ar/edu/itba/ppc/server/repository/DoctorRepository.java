@@ -45,11 +45,13 @@ public class DoctorRepository {
         return doctors;
     }
 
-    public Doctor getAvailableDoctor() {
+    public Doctor getAvailableDoctor(Integer patientLevel) {
         return doctors.values().stream()
                 .filter(doctor -> doctor.getAvailability().equals(AvailabilityDoctor.AVAILABLE.getValue()))
-                .min(Comparator.comparing(Doctor::getLevel)
+                .filter(doctor -> doctor.getLevel() >= patientLevel)
+                .sorted(Comparator.comparing(Doctor::getLevel)
                         .thenComparing(Doctor::getDoctorName))
+                .findFirst()
                 .orElse(null);
     }
 
