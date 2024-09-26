@@ -11,10 +11,14 @@ public class CreateQuerys {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("Room,Status,Patient,Doctor\n");
         for (RoomStatus row : roomStatuses) {
-            stringBuilder.append(row.getRoomNumber()).append(",")
-                    .append(row.getRoomStatus()).append(",")
-                    .append(row.getPatientName()).append(" (" + row.getPatientLevel() + ")").append(",")
-                    .append(row.getDoctorName()).append(" (" + row.getDoctorLevel() + ")").append("\n");
+            stringBuilder.append(row.getRoomNumber()).append(",").append(row.getRoomStatus()).append(",");
+            if(row.getRoomStatus().equals("free")){
+                stringBuilder.append(",,\n");
+            }
+            else {
+                stringBuilder.append(row.getPatientName()).append(" (" + row.getPatientLevel() + ")").append(",")
+                        .append(row.getDoctorName()).append(" (" + row.getDoctorLevel() + ")").append("\n");
+            }
         }
         ClientUtils.createOutputFile(outPath, stringBuilder.toString());
     }
@@ -34,8 +38,9 @@ public class CreateQuerys {
         stringBuilder.append("Room,Patient,Doctor\n");
         for (CareCompleted row : roomStatuses) {
             stringBuilder.append(row.getRoomNumber()).append(",")
-                    .append(row.getPatientName()).append(" (" + row.getPatientLevel() + ")").append(",")
-                    .append(row.getDoctorName()).append(" (" + row.getDoctorLevel() + ")").append("\n");
+                        .append(row.getPatientName()).append(" (" + row.getPatientLevel() + ")").append(",")
+                        .append(row.getDoctorName()).append(" (" + row.getDoctorLevel() + ")").append("\n");
+
         }
         ClientUtils.createOutputFile(outPath, stringBuilder.toString());
     }

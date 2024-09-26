@@ -53,7 +53,7 @@ public class EmergencyCareClient {
                                 response.getPatientName(), response.getPatientLevel(), response.getDoctorName(), response.getDoctorLevel(), response.getRoom());
                     }
                 }
-                case "careAllPatient" -> {
+                case "careAllPatients" -> {
                     EmergencyCareListResponse response = ClientCallback.executeHandling(() -> blockingStub.startAllEmergencyCare(Empty.newBuilder().build()));
                     if (Objects.nonNull(response)) {
                         for (EmergencyCareResponse careResponse : response.getEmergencyCareListList()) {

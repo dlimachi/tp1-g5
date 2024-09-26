@@ -1,16 +1,14 @@
 package ar.edu.itba.ppc.server.service;
 
+import ar.edu.itba.ppc.server.constants.EmergencyRoomStatus;
+import ar.edu.itba.ppc.server.model.Patient;
+import ar.edu.itba.ppc.server.model.Room;
+import ar.edu.itba.ppc.server.repository.DoctorRepository;
 import ar.edu.itba.ppc.server.repository.PatientRepository;
 import ar.edu.itba.ppc.server.repository.RoomRepository;
-import ar.edu.itba.ppc.server.repository.DoctorRepository;
 import ar.edu.itba.tp1g5.*;
-import io.grpc.stub.StreamObserver;
 import io.grpc.Status;
-import ar.edu.itba.ppc.server.model.Room;
-import ar.edu.itba.ppc.server.model.Doctor;
-import ar.edu.itba.ppc.server.model.Patient;
-import ar.edu.itba.ppc.server.constants.EmergencyRoomStatus;
-import ar.edu.itba.ppc.server.constants.StatusPatient;
+import io.grpc.stub.StreamObserver;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -57,27 +55,18 @@ public class QueryService extends QueryServiceGrpc.QueryServiceImplBase {
                 .setRoomStatus(room.getStatus());
 
         if (room.getStatus().equals(EmergencyRoomStatus.OCCUPIED.getValue())) {
-            Doctor attendingDoctor = doctorRepository.getDoctors().values().stream()
-                    .filter(d -> d.getRoom() != null && d.getRoom().equals(String.valueOf(room.getRoom())))
+            doctorRepository.getDoctors().values().stream()
+                    .filter(d -> d.getRoom() != null && d.getRoom().equals(room.getRoom()))
                     .findFirst()
-                    .orElse(null);
+                    .ifPresent(attendingDoctor -> builder.setDoctorName(attendingDoctor.getDoctorName())
+                            .setDoctorLevel(String.valueOf(attendingDoctor.getLevel())));
 
-            Patient attendingPatient = patientRepository.getPatients().values().stream()
+            patientRepository.getPatients().values().stream()
                     .filter(p -> p.getCurrentRoom() != null && p.getCurrentRoom().equals(room.getRoom()))
                     .findFirst()
-                    .orElse(null);
-
-            if (attendingDoctor != null) {
-                builder.setDoctorName(attendingDoctor.getDoctorName())
-                        .setDoctorLevel(String.valueOf(attendingDoctor.getLevel()));
-            }
-
-            if (attendingPatient != null) {
-                builder.setPatientName(attendingPatient.getPatientName())
-                        .setPatientLevel(String.valueOf(attendingPatient.getEmergencyLevel()));
-            }
+                    .ifPresent(attendingPatient -> builder.setPatientName(attendingPatient.getPatientName())
+                            .setPatientLevel(String.valueOf(attendingPatient.getEmergencyLevel())));
         }
-
         return builder.build();
     }
 

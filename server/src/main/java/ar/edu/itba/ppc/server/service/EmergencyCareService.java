@@ -39,29 +39,31 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
 
     @Override
     public void startEmergencyCare(EmergencyCareRequest request, StreamObserver<EmergencyCareResponse> responseObserver) {
-        EmergencyCareResponse reply = updateMedicalAttention(request, responseObserver);
-        responseObserver.onNext(reply);
-        responseObserver.onCompleted();
+        EmergencyCareResponse reply = synchronizedStartEmergencyCare(request, responseObserver);
+        if(Objects.nonNull(reply)) {
+            responseObserver.onNext(reply);
+            responseObserver.onCompleted();
+        }
     }
 
     @Override
     public void startAllEmergencyCare(Empty request, StreamObserver<EmergencyCareListResponse> responseObserver) {
-        List<EmergencyCareResponse> replies = startEmergencyCareInFreeRooms(responseObserver);
+        List<EmergencyCareResponse> replies = synchronizedStartAllEmergencyCare(responseObserver);
         responseObserver.onNext(EmergencyCareListResponse.newBuilder().addAllEmergencyCareList(replies).build());
         responseObserver.onCompleted();
     }
 
     @Override
     public void endEmergencyCare(EmergencyCareRequest request, StreamObserver<EmergencyCareResponse> responseObserver) {
-        EmergencyCareResponse reply = updateStatusForEmergencyCare(request, responseObserver);
-        if (reply != null) {
+        EmergencyCareResponse reply = syncronizedEndEmergencyCare(request, responseObserver);
+        if (Objects.nonNull(reply)) {
             responseObserver.onNext(reply);
             responseObserver.onCompleted();
             completedCares.add(reply);
         }
     }
 
-    private synchronized List<EmergencyCareResponse> startEmergencyCareInFreeRooms(StreamObserver<EmergencyCareListResponse> responseObserver) {
+    private synchronized List<EmergencyCareResponse> synchronizedStartAllEmergencyCare(StreamObserver<EmergencyCareListResponse> responseObserver) {
         List<Room> freeRooms = roomRepository.getFreeRooms();
 
         Patient patient = patientRepository.getUrgentPatient();
@@ -69,11 +71,11 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
         Doctor doctor = doctorRepository.getAvailableDoctor(patient.getEmergencyLevel());
 
         return freeRooms.stream()
-                .map(room -> createResponse(patient, room, doctor))
+                .map(room -> updateMedicalAttention(patient, room, doctor))
                 .collect(Collectors.toList());
     }
 
-    private synchronized EmergencyCareResponse updateMedicalAttention(EmergencyCareRequest request, StreamObserver<EmergencyCareResponse> responseObserver) {
+    private synchronized EmergencyCareResponse synchronizedStartEmergencyCare(EmergencyCareRequest request, StreamObserver<EmergencyCareResponse> responseObserver) {
         Integer roomId = request.getRoom();
         Room room = roomRepository.getRoom(roomId);
 
@@ -108,10 +110,10 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
             return null;
         }
 
-        return createResponse(patient, room, availableDoctor);
+        return updateMedicalAttention(patient, room, availableDoctor);
     }
 
-    private synchronized EmergencyCareResponse updateStatusForEmergencyCare(EmergencyCareRequest request, StreamObserver<EmergencyCareResponse> responseObserver) {
+    private synchronized EmergencyCareResponse syncronizedEndEmergencyCare(EmergencyCareRequest request, StreamObserver<EmergencyCareResponse> responseObserver) {
         String doctorName = request.getDoctorName();
         Integer room = request.getRoom();
 
@@ -138,6 +140,7 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
         attendingDoctor.setAvailability(AvailabilityDoctor.AVAILABLE.getValue());
         attendingDoctor.setRoom(null);
         attendingPatient.setStatus(StatusPatient.COMPLETED.getValue());
+        attendingPatient.setCurrentRoom(null);
 
         return EmergencyCareResponse.newBuilder()
                 .setDoctorName(attendingDoctor.getDoctorName())
@@ -149,11 +152,12 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
                 .build();
     }
 
-    private EmergencyCareResponse createResponse(Patient patient, Room room, Doctor doctor) {
+    private EmergencyCareResponse updateMedicalAttention(Patient patient, Room room, Doctor doctor) {
         room.setStatus(EmergencyRoomStatus.OCCUPIED.getValue());
         doctor.setRoom(room.getRoom());
         doctor.setAvailability(AvailabilityDoctor.ATTENDING.getValue());
         patient.setStatus(StatusPatient.ATTENDING.getValue());
+        patient.setCurrentRoom(room.getRoom());
 
         return EmergencyCareResponse.newBuilder()
                 .setRoom(doctor.getRoom())
