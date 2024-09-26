@@ -9,18 +9,19 @@ import ar.edu.itba.ppc.server.model.Room;
 import ar.edu.itba.ppc.server.repository.DoctorRepository;
 import ar.edu.itba.ppc.server.repository.PatientRepository;
 import ar.edu.itba.ppc.server.repository.RoomRepository;
-import ar.edu.itba.tp1g5.EmergencyCareResponse;
+import ar.edu.itba.tp1g5.EmergencyCareListResponse;
 import ar.edu.itba.tp1g5.EmergencyCareRequest;
+import ar.edu.itba.tp1g5.EmergencyCareResponse;
 import ar.edu.itba.tp1g5.EmergencyCareServiceGrpc;
+import com.google.protobuf.Empty;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
-import com.google.protobuf.Empty;
 
-import java.util.Comparator;
-import java.util.Objects;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.stream.Collectors;
 
 public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCareServiceImplBase {
     private final DoctorRepository doctorRepository;

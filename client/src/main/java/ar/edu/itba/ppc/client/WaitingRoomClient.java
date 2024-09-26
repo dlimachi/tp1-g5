@@ -63,7 +63,7 @@ public class WaitingRoomClient {
                             .build();
                     PatientResponse addResponse = ClientCallback.executeHandling(() -> blockingStub.registerPatient(addRequest));
                     if(Objects.nonNull(addResponse))
-                        logger.info("Patient {} added with emergency level {}", addResponse.getPatientName(), addResponse.getLevel());
+                        logger.info("Patient {} ({}) is in the waiting room", addResponse.getPatientName(), addResponse.getLevel());
                     break;
                 case "updateLevel":
                     if (levelStr == null) {
@@ -76,7 +76,7 @@ public class WaitingRoomClient {
                             .build();
                     PatientResponse updateResponse = ClientCallback.executeHandling(() -> blockingStub.updateEmergencyLevel(updateRequest));
                     if(Objects.nonNull(updateResponse))
-                        logger.info("Updated emergency level for patient {} to {}", updateResponse.getPatientName(), updateResponse.getLevel());
+                        logger.info("Patient {} ({}) is in the waiting room", updateResponse.getPatientName(), updateResponse.getLevel());
                     break;
                 case "checkPatient":
                     PatientRequest checkRequest = PatientRequest.newBuilder()

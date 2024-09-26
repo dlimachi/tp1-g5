@@ -13,14 +13,12 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static ar.edu.itba.ppc.client.utilsConsole.ClientUtils.parseArgs;
 
 public class QueryClient {
     private static Logger logger = LoggerFactory.getLogger(EmergencyAdminClient.class);
-    private static CountDownLatch latch;
 
     public static void main(String[] args) throws InterruptedException {
         logger.info("tp1-g5 Query Client Starting ...");
@@ -29,6 +27,11 @@ public class QueryClient {
         final String serverAddress = argMap.get(ClientArgs.SERVER_ADDRESS.getValue());
         final String action = argMap.get(ClientArgs.ACTION.getValue());
         final String outPath = argMap.get(ClientArgs.OUT_PATH.getValue());
+
+        if (serverAddress == null || action == null || outPath == null ) {
+            logger.error("Missing required arguments. Usage: -DserverAddress=<address> -Daction=<action> -DoutPath=<outPath>");
+            return;
+        }
 
         ManagedChannel channel = ManagedChannelBuilder.forTarget(serverAddress)
                 .usePlaintext()
@@ -56,7 +59,6 @@ public class QueryClient {
                     }
                 }
                 case "queryCares" -> {
-                    latch = new CountDownLatch(1);
                     QueryRequest request = QueryRequest.newBuilder().setPath(outPath).build();
                     QueryCareCompletedResponse response = ClientCallback.executeHandling(() -> blockingStub.queryCares(request));
 

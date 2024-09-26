@@ -13,7 +13,7 @@ public class CreateQuerys {
         for (RoomStatus row : roomStatuses) {
             stringBuilder.append(row.getRoomNumber()).append(",")
                     .append(row.getRoomStatus()).append(",")
-                    .append(row.getPatientLevel()).append(" (" + row.getPatientLevel() + ")").append(",")
+                    .append(row.getPatientName()).append(" (" + row.getPatientLevel() + ")").append(",")
                     .append(row.getDoctorName()).append(" (" + row.getDoctorLevel() + ")").append("\n");
         }
         ClientUtils.createOutputFile(outPath, stringBuilder.toString());
@@ -34,7 +34,7 @@ public class CreateQuerys {
         stringBuilder.append("Room,Patient,Doctor\n");
         for (CareCompleted row : roomStatuses) {
             stringBuilder.append(row.getRoomNumber()).append(",")
-                    .append(row.getPatientLevel()).append(" (" + row.getPatientLevel() + ")").append(",")
+                    .append(row.getPatientName()).append(" (" + row.getPatientLevel() + ")").append(",")
                     .append(row.getDoctorName()).append(" (" + row.getDoctorLevel() + ")").append("\n");
         }
         ClientUtils.createOutputFile(outPath, stringBuilder.toString());
