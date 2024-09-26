@@ -29,6 +29,7 @@ public class QueryClient {
         final String serverAddress = argMap.get(ClientArgs.SERVER_ADDRESS.getValue());
         final String action = argMap.get(ClientArgs.ACTION.getValue());
         final String outPath = argMap.get(ClientArgs.OUT_PATH.getValue());
+        final String room = argMap.get(ClientArgs.ROOM.getValue());
 
         if (serverAddress == null || action == null || outPath == null ) {
             logger.error("Missing required arguments. Usage: -DserverAddress=<address> -Daction=<action> -DoutPath=<outPath>");
