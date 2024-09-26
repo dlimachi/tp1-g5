@@ -75,7 +75,7 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
 
     private synchronized EmergencyCareResponse updateMedicalAttention(EmergencyCareRequest request, StreamObserver<EmergencyCareResponse> responseObserver) {
         Integer roomId = request.getRoom();
-        Room room = roomRepository.getRooms().get(roomId);
+        Room room = roomRepository.getRoom(roomId);
 
         if (Objects.isNull(room)) {
             responseObserver.onError(Status.NOT_FOUND
@@ -122,16 +122,17 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
             return null;
         }
 
-        Doctor attendingDoctor = doctorRepository.getDoctors().get(doctorName);
-        Room attendingRoom = roomRepository.getRooms().get(room);
-        Patient attendingPatient = patientRepository.getPatients().get(request.getPatientName());
+        Doctor attendingDoctor = doctorRepository.getDoctor(doctorName);
 
-        if (attendingDoctor.getRoom() == null || !attendingDoctor.getRoom().equals(room.toString())) {
+        if (attendingDoctor.getRoom() == null || !attendingDoctor.getRoom().equals(room)) {
             responseObserver.onError(Status.NOT_FOUND
                     .withDescription("Doctor " + request.getDoctorName() + " not assigned to room #" + request.getRoom())
                     .asRuntimeException());
             return null;
         }
+
+        Room attendingRoom = roomRepository.getRoom(room);
+        Patient attendingPatient = patientRepository.getPatient(request.getPatientName());
 
         attendingRoom.setStatus(EmergencyRoomStatus.FREE.getValue());
         attendingDoctor.setAvailability(AvailabilityDoctor.AVAILABLE.getValue());
@@ -155,7 +156,7 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
         patient.setStatus(StatusPatient.ATTENDING.getValue());
 
         return EmergencyCareResponse.newBuilder()
-                .setRoom(room.getRoom())
+                .setRoom(doctor.getRoom())
                 .setDoctorName(doctor.getDoctorName())
                 .setDoctorLevel(doctor.getLevel())
                 .setPatientName(patient.getPatientName())

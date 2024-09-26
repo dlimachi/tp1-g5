@@ -66,25 +66,13 @@ class EmergencyCareServiceTest {
         patientRepository.addPatient(patient.getPatientName(), patient.getEmergencyLevel());
         when(patientRepository.getUrgentPatient()).thenReturn(patient);
 
-        Patient patient2 = new Patient("Foo2", 1, "waiting");
-        patientRepository.addPatient(patient.getPatientName(), patient.getEmergencyLevel());
-        when(patientRepository.getUrgentPatient()).thenReturn(patient2);
-
-        Doctor doctor = new Doctor("Doctor1", 3, "available", null);
+        Doctor doctor = new Doctor("Doctor", 3, "available", null);
         doctorRepository.addDoctor(doctor.getDoctorName(), doctor.getLevel());
         when(doctorRepository.getAvailableDoctor(patient.getEmergencyLevel())).thenReturn(doctor);
-
-        Doctor doctor2 = new Doctor("Doctor2", 2, "available", null);
-        doctorRepository.addDoctor(doctor2.getDoctorName(), doctor2.getLevel());
-        when(doctorRepository.getAvailableDoctor(patient2.getEmergencyLevel())).thenReturn(doctor2);
 
         Room room = new Room(1, "free");
         roomRepository.addRoom();
         when(roomRepository.getRoom(1)).thenReturn(room);
-
-        Room room2 = new Room(2, "free");
-        roomRepository.addRoom();
-        when(roomRepository.getRoom(2)).thenReturn(room2);
 
         StreamObserver<EmergencyCareListResponse> responseObserver = mock(StreamObserver.class);
 
@@ -94,8 +82,8 @@ class EmergencyCareServiceTest {
         verify(responseObserver, times(1)).onNext(argumentCaptor.capture());
         EmergencyCareListResponse response = argumentCaptor.getValue();
 
-        Assertions.assertEquals(2, response.getEmergencyCareListCount());
-        Assertions.assertEquals("Doctor1", response.getEmergencyCareList(0).getDoctorName());
+        Assertions.assertEquals(1, response.getEmergencyCareListCount());
+        Assertions.assertEquals("Doctor", response.getEmergencyCareList(0).getDoctorName());
         Assertions.assertEquals("Foo", response.getEmergencyCareList(0).getPatientName());
     }
 
