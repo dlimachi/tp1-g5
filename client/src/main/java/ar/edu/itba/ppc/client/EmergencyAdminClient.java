@@ -2,7 +2,10 @@ package ar.edu.itba.ppc.client;
 
 import ar.edu.itba.ppc.client.utilsConsole.ClientArgs;
 import ar.edu.itba.ppc.client.utilsConsole.ClientCallback;
-import ar.edu.itba.tp1g5.*;
+import ar.edu.itba.tp1g5.DoctorRequest;
+import ar.edu.itba.tp1g5.DoctorResponse;
+import ar.edu.itba.tp1g5.RoomResponse;
+import ar.edu.itba.tp1g5.emergencyAdminServiceGrpc;
 import com.google.protobuf.Empty;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -12,14 +15,12 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static ar.edu.itba.ppc.client.utilsConsole.ClientUtils.parseArgs;
 
 public class EmergencyAdminClient {
     private static Logger logger = LoggerFactory.getLogger(EmergencyAdminClient.class);
-    private static CountDownLatch latch;
 
     public static void main(String[] args) throws InterruptedException {
         logger.info("tp1-g5 Emergency Administration Client Starting ...");
@@ -45,7 +46,6 @@ public class EmergencyAdminClient {
 
             switch (action) {
                 case "addRoom":
-                    //latch = new CountDownLatch(1);
                     RoomResponse response = ClientCallback.executeHandling(() -> blockingStub.addRoom(Empty.newBuilder().build()));
                     if(Objects.nonNull(response))
                         logger.info("Room {} added successfully", response.getRoom());
@@ -91,8 +91,6 @@ public class EmergencyAdminClient {
                 default:
                     logger.error("Unknown action: " + action);
             }
-            //latch.await();
-
     } catch (StatusRuntimeException e) {
         logger.error("gRPC failed: {}", e.getStatus());
     } catch (Exception e) {

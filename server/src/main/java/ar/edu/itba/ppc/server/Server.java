@@ -23,13 +23,13 @@ public class Server {
         DoctorRepository repository = new DoctorRepository();
         RoomRepository roomRepository = new RoomRepository();
         PatientRepository patientRepository = new PatientRepository();
-        EmergencyCareService emergencyCareService = new EmergencyCareService(repository, roomRepository,patientRepository);
+        EmergencyCareService emergencyCareService = new EmergencyCareService(repository, roomRepository, patientRepository);
 
         io.grpc.Server server = ServerBuilder.forPort(port)
                 .addService(new EmergencyAdminService(repository, roomRepository))
                 .addService(emergencyCareService)
                 .addService(new WaitingRoomService(patientRepository))
-                .addService(new QueryService(patientRepository,roomRepository,repository,emergencyCareService))
+                .addService(new QueryService(patientRepository,roomRepository,repository, emergencyCareService))
                 .build();
         server.start();
         logger.info("Server started, listening on " + port);

@@ -15,14 +15,12 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static ar.edu.itba.ppc.client.utilsConsole.ClientUtils.parseArgs;
 
 public class EmergencyCareClient {
     private static Logger logger = LoggerFactory.getLogger(EmergencyAdminClient.class);
-    private static CountDownLatch latch;
 
     public static void main(String[] args) throws InterruptedException {
         logger.info("tp1-g5 Emergency Care Client Starting ...");

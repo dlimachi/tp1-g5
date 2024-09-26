@@ -13,12 +13,14 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static ar.edu.itba.ppc.client.utilsConsole.ClientUtils.parseArgs;
 
 public class QueryClient {
-    private static Logger logger = LoggerFactory.getLogger(QueryClient.class);
+    private static Logger logger = LoggerFactory.getLogger(EmergencyAdminClient.class);
+    private static CountDownLatch latch;
 
     public static void main(String[] args) throws InterruptedException {
         logger.info("tp1-g5 Query Client Starting ...");
@@ -27,12 +29,11 @@ public class QueryClient {
         final String serverAddress = argMap.get(ClientArgs.SERVER_ADDRESS.getValue());
         final String action = argMap.get(ClientArgs.ACTION.getValue());
         final String outPath = argMap.get(ClientArgs.OUT_PATH.getValue());
-        final String room = argMap.get(ClientArgs.ROOM.getValue());
 
-        logger.info("Server Address: {}", serverAddress);
-        logger.info("Action: {}", action);
-        logger.info("Output Path: {}", outPath);
-        logger.info("Room: {}", room);
+        if (serverAddress == null || action == null || outPath == null ) {
+            logger.error("Missing required arguments. Usage: -DserverAddress=<address> -Daction=<action> -DoutPath=<outPath>");
+            return;
+        }
 
         ManagedChannel channel = ManagedChannelBuilder.forTarget(serverAddress)
                 .usePlaintext()
@@ -46,7 +47,6 @@ public class QueryClient {
                     QueryRequest request = QueryRequest.newBuilder().setPath(outPath).build();
                     QueryRoomResponse response = ClientCallback.executeHandling(() -> blockingStub.queryRooms(request));
                     if (Objects.nonNull(response)) {
-                        logger.info("Received response for queryRooms");
                         CreateQuerys.queryRoomStatusFile(response.getRoomsList(), outPath);
                         ClientUtils.getCSVData(outPath);
                     }
@@ -56,7 +56,6 @@ public class QueryClient {
                     QueryWaitingRoomResponse response = ClientCallback.executeHandling(() -> blockingStub.queryWaitingRoom(request));
 
                     if (Objects.nonNull(response)) {
-                        logger.info("Received response for queryWaitingRoom");
                         CreateQuerys.queryWaitingRoomFile(response.getWaitingRoomsList(), outPath);
                         ClientUtils.getCSVData(outPath);
                     }
@@ -73,12 +72,8 @@ public class QueryClient {
                     QueryCareCompletedResponse response = ClientCallback.executeHandling(() -> blockingStub.queryCares(request));
 
                     if (Objects.nonNull(response)) {
-                        logger.info("Received {} completed cares", response.getCareCompletedCount());
                         CreateQuerys.queryCaresFile(response.getCareCompletedList(), outPath);
-                        logger.info("CSV file created at: {}", outPath);
                         ClientUtils.getCSVData(outPath);
-                    } else {
-                        logger.warn("No response received from queryCares");
                     }
                 }
                 default -> logger.error("Unknown action: " + action);
@@ -88,7 +83,7 @@ public class QueryClient {
             logger.error("gRPC failed: {}", e.getStatus());
         }
         catch (Exception e) {
-            logger.error("Error: " + e.getMessage(), e);
+            logger.error("Error: " + e.getMessage());
         }
         finally {
             channel.shutdown().awaitTermination(10, TimeUnit.SECONDS);
