@@ -98,6 +98,7 @@ class EmergencyCareServiceTest {
         when(roomRepository.getRoom(1)).thenReturn(room);
 
         Patient patient = new Patient("Foo", 2, "attending");
+        patient.setCurrentRoom(1);
         patientRepository.addPatient(patient.getPatientName(), patient.getEmergencyLevel());
         when(patientRepository.getPatient(patient.getPatientName())).thenReturn(patient);
 
