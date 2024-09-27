@@ -1,9 +1,11 @@
 package ar.edu.itba.ppc.client;
 
 import ar.edu.itba.ppc.client.utilsConsole.ClientArgs;
-import ar.edu.itba.ppc.client.utilsConsole.ClientCallback;
-import ar.edu.itba.tp1g5.*;
-import com.google.common.util.concurrent.ListenableFuture;
+import ar.edu.itba.ppc.client.utilsConsole.ClientActionHandler;
+import ar.edu.itba.tp1g5.DoctorRequest;
+import ar.edu.itba.tp1g5.DoctorResponse;
+import ar.edu.itba.tp1g5.RoomResponse;
+import ar.edu.itba.tp1g5.emergencyAdminServiceGrpc;
 import com.google.protobuf.Empty;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -13,14 +15,12 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static ar.edu.itba.ppc.client.utilsConsole.ClientUtils.parseArgs;
+import static ar.edu.itba.ppc.client.utilsConsole.ClientParserHelper.parseArgs;
 
 public class EmergencyAdminClient {
     private static Logger logger = LoggerFactory.getLogger(EmergencyAdminClient.class);
-    private static CountDownLatch latch;
 
     public static void main(String[] args) throws InterruptedException {
         logger.info("tp1-g5 Emergency Administration Client Starting ...");
@@ -41,15 +41,14 @@ public class EmergencyAdminClient {
                 .usePlaintext()
                 .build();
         try {
-            emergencyAdminServiceGrpc.emergencyAdminServiceFutureStub futureStub =
-                emergencyAdminServiceGrpc.newFutureStub(channel);
+            emergencyAdminServiceGrpc.emergencyAdminServiceBlockingStub blockingStub =
+                emergencyAdminServiceGrpc.newBlockingStub(channel);
 
             switch (action) {
                 case "addRoom":
-                    latch = new CountDownLatch(1);
-                    ListenableFuture<RoomResponse> response = ClientCallback.executeHandling(() -> futureStub.addRoom(Empty.newBuilder().build()));
+                    RoomResponse response = ClientActionHandler.executeHandling(() -> blockingStub.addRoom(Empty.newBuilder().build()));
                     if(Objects.nonNull(response))
-                        logger.info("Room {} added successfully", response.get().getRoom());
+                        logger.info("Room {} added successfully", response.getRoom());
                     break;
                 case "addDoctor":
                     if (level == null || doctorName == null) {
@@ -60,12 +59,11 @@ public class EmergencyAdminClient {
                             .setDoctorName(doctorName)
                             .setLevel(Integer.parseInt(level))
                             .build();
-                    ListenableFuture<DoctorResponse> addResponse = ClientCallback.executeHandling(() -> futureStub.addDoctor(addRequest));
+                    DoctorResponse addResponse = ClientActionHandler.executeHandling(() -> blockingStub.addDoctor(addRequest));
                     if(Objects.nonNull(addResponse))
-                        logger.info("Doctor {} ({}) added successfully", addResponse.get().getDoctorName(), addResponse.get().getLevel());
+                        logger.info("Doctor {} ({}) added successfully", addResponse.getDoctorName(), addResponse.getLevel());
                     break;
                 case "setDoctor":
-                    latch = new CountDownLatch(1);
                     if (doctorName == null || availability == null) {
                         logger.error("Doctor name and level are required for setDoctor action");
                         return;
@@ -74,12 +72,11 @@ public class EmergencyAdminClient {
                             .setDoctorName(doctorName)
                             .setAvailability(availability)
                             .build();
-                    ListenableFuture<DoctorResponse> setResponse = ClientCallback.executeHandling(() -> futureStub.setDoctor(setRequest));
+                    DoctorResponse setResponse = ClientActionHandler.executeHandling(() -> blockingStub.setDoctor(setRequest));
                     if(Objects.nonNull(setResponse))
-                        logger.info("Doctor {} ({}) is {}", setResponse.get().getDoctorName(), setResponse.get().getLevel(), setResponse.get().getAvailability());
+                        logger.info("Doctor {} ({}) is {}", setResponse.getDoctorName(), setResponse.getLevel(), setResponse.getAvailability());
                     break;
                 case "checkDoctor":
-                    latch = new CountDownLatch(1);
                     if (doctorName == null) {
                         logger.error("Doctor name is required for checkDoctor action");
                         return;
@@ -87,15 +84,15 @@ public class EmergencyAdminClient {
                     DoctorRequest checkRequest = DoctorRequest.newBuilder()
                             .setDoctorName(doctorName)
                             .build();
-                    ListenableFuture<DoctorResponse> checkResponse = ClientCallback.executeHandling(() -> futureStub.checkDoctor(checkRequest));
+                    DoctorResponse checkResponse = ClientActionHandler.executeHandling(() -> blockingStub.checkDoctor(checkRequest));
                     if(Objects.nonNull(checkResponse))
-                        logger.info("Doctor {} ({}) is {}", checkResponse.get().getDoctorName(), checkResponse.get().getLevel(), checkResponse.get().getAvailability());
+                        logger.info("Doctor {} ({}) is {}", checkResponse.getDoctorName(), checkResponse.getLevel(), checkResponse.getAvailability());
                     break;
+                default:
+                    logger.error("Unknown action: " + action);
             }
-            latch.await();
-
     } catch (StatusRuntimeException e) {
-        logger.error("gRPC failed: {}", e.getStatus().getDescription());
+        logger.error("gRPC failed: {}", e.getStatus());
     } catch (Exception e) {
         logger.error("Unexpected error: ", e);
     } finally {

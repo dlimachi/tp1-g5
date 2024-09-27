@@ -3,6 +3,7 @@ package ar.edu.itba.ppc.server.repository;
 import ar.edu.itba.ppc.server.constants.AvailabilityDoctor;
 import ar.edu.itba.ppc.server.model.Doctor;
 
+import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -42,6 +43,16 @@ public class DoctorRepository {
 
     public Map<String, Doctor> getDoctors() {
         return doctors;
+    }
+
+    public Doctor getAvailableDoctor(Integer patientLevel) {
+        return doctors.values().stream()
+                .filter(doctor -> doctor.getAvailability().equals(AvailabilityDoctor.AVAILABLE.getValue()))
+                .filter(doctor -> doctor.getLevel() >= patientLevel)
+                .sorted(Comparator.comparing(Doctor::getLevel)
+                        .thenComparing(Doctor::getDoctorName))
+                .findFirst()
+                .orElse(null);
     }
 
 }

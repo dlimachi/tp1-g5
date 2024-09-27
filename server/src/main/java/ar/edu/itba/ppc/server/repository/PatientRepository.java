@@ -11,20 +11,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class PatientRepository {
-    // Usamos ConcurrentHashMap para operaciones básicas thread-safe
     private final ConcurrentHashMap<String, Patient> patients;
-
-    // ReentrantReadWriteLock permite múltiples lecturas simultáneas, pero escrituras exclusivas
     private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
 
     public PatientRepository() {
         this.patients = new ConcurrentHashMap<>();
     }
 
-    /**
-     * Agrega un nuevo paciente al repositorio.
-     * Usa un write lock para asegurar que la operación sea atómica.
-     */
     public Patient addPatient(String patientName, Integer level) {
         rwLock.writeLock().lock();
         try {
@@ -35,10 +28,6 @@ public class PatientRepository {
         }
     }
 
-    /**
-     * Actualiza el nivel de emergencia de un paciente.
-     * Usa un write lock para asegurar que la actualización sea atómica.
-     */
     public Patient updateEmergencyLevel(String patientName, int newLevel) {
         rwLock.writeLock().lock();
         try {
@@ -53,10 +42,6 @@ public class PatientRepository {
         }
     }
 
-    /**
-     * Calcula cuántos pacientes están delante en la lista de espera.
-     * Usa un read lock para asegurar una vista consistente de todos los pacientes durante el cálculo.
-     */
     public Integer getPatientsAhead(String patientName) {
         rwLock.readLock().lock();
         try {
@@ -88,5 +73,14 @@ public class PatientRepository {
 
     public Patient getPatient(String name) {
         return patients.get(name);
+    }
+
+    public Patient getUrgentPatient() {
+        return patients.values().stream()
+                .filter(p -> p.getStatus().equals(StatusPatient.WAITING.getValue()))
+                .sorted(Comparator.comparing(Patient::getEmergencyLevel).reversed()
+                        .thenComparing(Patient::getArrivalTime))
+                .findFirst()
+                .orElse(null);
     }
 }

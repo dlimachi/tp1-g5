@@ -14,6 +14,7 @@ service QueryService {
 
 message QueryRequest {
   string path = 1;
+  int32 room = 2;
 }
 
 message QueryRoomResponse {

@@ -10,7 +10,7 @@ option java_multiple_files = true;
 
 service EmergencyCareService {
   rpc StartEmergencyCare(EmergencyCareRequest) returns (EmergencyCareResponse);
-  rpc StartAllEmergencyCare(google.protobuf.Empty) returns (EmergencyCareResponse);
+  rpc StartAllEmergencyCare(google.protobuf.Empty) returns (EmergencyCareListResponse);
   rpc EndEmergencyCare(EmergencyCareRequest) returns (EmergencyCareResponse);
 }
 
@@ -18,6 +18,10 @@ message EmergencyCareRequest {
   int32 room = 1;
   string doctorName = 2;
   string patientName = 3;
+}
+
+message EmergencyCareListResponse {
+  repeated EmergencyCareResponse emergencyCareList = 1;
 }
 
 message EmergencyCareResponse {

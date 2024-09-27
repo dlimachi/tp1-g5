@@ -30,7 +30,6 @@ public class EmergencyAdminService extends emergencyAdminServiceGrpc.emergencyAd
         Room response = roomRepository.addRoom();
         RoomResponse reply = RoomResponse.newBuilder()
                 .setRoom(response.getRoom())
-                .setStatus(response.getStatus())
                 .build();
         responseObserver.onNext(reply);
         responseObserver.onCompleted();

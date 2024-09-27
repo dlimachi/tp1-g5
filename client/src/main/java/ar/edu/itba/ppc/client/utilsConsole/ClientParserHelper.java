@@ -12,8 +12,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ClientUtils {
-    private static final Logger logger = LoggerFactory.getLogger(ClientUtils.class);
+public class ClientParserHelper {
+    private static final Logger logger = LoggerFactory.getLogger(ClientParserHelper.class);
 
     public static Map<String,String> parseArgs(String[] args) {
         Map<String,String> map = new HashMap<>();
@@ -51,13 +51,44 @@ public class ClientUtils {
         }
     }
 
-    public static void createOutputFile(String outPath, String string) {
+    public static boolean createOutputFile(String outPath, String string) {
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter(outPath));
             writer.write(string);
             writer.close();
+            return true;
         } catch (IOException e) {
             logger.error("Error creating output file");
+        }
+        return false;
+    }
+
+    public static void printCSVData(String outPath) {
+        try (FileReader fileReader = new FileReader(outPath);
+             CSVReader reader = new CSVReaderBuilder(fileReader)
+                     .withCSVParser(new CSVParserBuilder().withSeparator(',').build())
+                     .build()) {
+
+            List<String[]> allRows = reader.readAll();
+
+            if (allRows.isEmpty()) {
+                logger.warn("The CSV file is empty: {}", outPath);
+                return;
+            }
+
+            // Imprimir encabezados
+            System.out.println(String.join(", ", allRows.get(0)));
+
+            // Imprimir datos
+            for (int i = 1; i < allRows.size(); i++) {
+                System.out.println(String.join(", ", allRows.get(i)));
+            }
+
+            logger.info("CSV data printed successfully from file: {}", outPath);
+        } catch (FileNotFoundException e) {
+            logger.error("File not found: {}", outPath, e);
+        } catch (IOException e) {
+            logger.error("Error reading CSV file: {}", outPath, e);
         }
     }
 }

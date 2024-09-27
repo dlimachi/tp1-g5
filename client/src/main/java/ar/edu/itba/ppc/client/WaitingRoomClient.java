@@ -1,7 +1,7 @@
 package ar.edu.itba.ppc.client;
 
 import ar.edu.itba.ppc.client.utilsConsole.ClientArgs;
-import ar.edu.itba.ppc.client.utilsConsole.ClientCallback;
+import ar.edu.itba.ppc.client.utilsConsole.ClientActionHandler;
 import ar.edu.itba.tp1g5.PatientRequest;
 import ar.edu.itba.tp1g5.PatientResponse;
 import ar.edu.itba.tp1g5.WaitingRoomServiceGrpc;
@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import static ar.edu.itba.ppc.client.utilsConsole.ClientUtils.parseArgs;
+import static ar.edu.itba.ppc.client.utilsConsole.ClientParserHelper.parseArgs;
 
 public class WaitingRoomClient {
     private static final Logger logger = LoggerFactory.getLogger(WaitingRoomClient.class);
@@ -61,9 +61,9 @@ public class WaitingRoomClient {
                             .setPatientName(patient)
                             .setLevel(Integer.parseInt(levelStr))
                             .build();
-                    PatientResponse addResponse = ClientCallback.executeHandling(() -> blockingStub.registerPatient(addRequest));
+                    PatientResponse addResponse = ClientActionHandler.executeHandling(() -> blockingStub.registerPatient(addRequest));
                     if(Objects.nonNull(addResponse))
-                        logger.info("Patient {} added with emergency level {}", addResponse.getPatientName(), addResponse.getLevel());
+                        logger.info("Patient {} ({}) is in the waiting room", addResponse.getPatientName(), addResponse.getLevel());
                     break;
                 case "updateLevel":
                     if (levelStr == null) {
@@ -74,16 +74,16 @@ public class WaitingRoomClient {
                             .setPatientName(patient)
                             .setLevel(Integer.parseInt(levelStr))
                             .build();
-                    PatientResponse updateResponse = ClientCallback.executeHandling(() -> blockingStub.updateEmergencyLevel(updateRequest));
+                    PatientResponse updateResponse = ClientActionHandler.executeHandling(() -> blockingStub.updateEmergencyLevel(updateRequest));
                     if(Objects.nonNull(updateResponse))
-                        logger.info("Updated emergency level for patient {} to {}", updateResponse.getPatientName(), updateResponse.getLevel());
+                        logger.info("Patient {} ({}) is in the waiting room", updateResponse.getPatientName(), updateResponse.getLevel());
                     break;
                 case "checkPatient":
                     PatientRequest checkRequest = PatientRequest.newBuilder()
                             .setPatientName(patient)
                             .build();
 
-                    PatientResponse checkResponse = ClientCallback.executeHandling(() -> blockingStub.checkWaitingList(checkRequest));
+                    PatientResponse checkResponse = ClientActionHandler.executeHandling(() -> blockingStub.checkWaitingList(checkRequest));
                     if(Objects.nonNull(checkResponse))
                         logger.info("Patient {} ({}) is in the waiting room with {} patients ahead",
                             checkResponse.getPatientName(), checkResponse.getLevel(), checkResponse.getWaitingPatient());

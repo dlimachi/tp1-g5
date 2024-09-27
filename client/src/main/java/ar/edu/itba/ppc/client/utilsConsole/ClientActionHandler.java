@@ -6,8 +6,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.Callable;
 
-public class ClientCallback {
-    private static final Logger logger = LoggerFactory.getLogger(ClientUtils.class);
+public class ClientActionHandler {
+    private static final Logger logger = LoggerFactory.getLogger(ClientParserHelper.class);
 
     public static <T> T executeHandling(Callable<T> callable) {
         try {

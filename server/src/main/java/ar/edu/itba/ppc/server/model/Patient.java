@@ -1,27 +1,20 @@
 package ar.edu.itba.ppc.server.model;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 public class Patient {
     private String patientName;
     private Integer emergencyLevel;
-    private final Instant arrivalTime;
-
     private String status;
+    private LocalDateTime arrivalTime;
+    private Integer currentRoom;
 
     public Patient(String patientName, Integer emergencyLevel, String status) {
         this.patientName = patientName;
         this.emergencyLevel = emergencyLevel;
-        this.arrivalTime = Instant.now();
         this.status = status;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
+        this.arrivalTime = LocalDateTime.now();
+        this.currentRoom = null;
     }
 
     public String getPatientName() {
@@ -40,18 +33,27 @@ public class Patient {
         this.emergencyLevel = emergencyLevel;
     }
 
-    public Instant getArrivalTime() {
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public LocalDateTime getArrivalTime() {
         return arrivalTime;
     }
 
-    // No setter for arrivalTime as it should not be modified after creation
+    public void setArrivalTime(LocalDateTime arrivalTime) {
+        this.arrivalTime = arrivalTime;
+    }
 
-    @Override
-    public String toString() {
-        return "Patient{" +
-                "patientName='" + patientName + '\'' +
-                ", emergencyLevel=" + emergencyLevel +
-                ", arrivalTime=" + arrivalTime +
-                '}';
+    public Integer getCurrentRoom() {
+        return currentRoom;
+    }
+
+    public void setCurrentRoom(Integer currentRoom) {
+        this.currentRoom = currentRoom;
     }
 }
