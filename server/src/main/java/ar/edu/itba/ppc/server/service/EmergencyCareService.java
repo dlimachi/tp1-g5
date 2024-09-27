@@ -135,6 +135,13 @@ public class EmergencyCareService extends EmergencyCareServiceGrpc.EmergencyCare
         Room attendingRoom = roomRepository.getRoom(room);
         Patient attendingPatient = patientRepository.getPatient(request.getPatientName());
 
+        if (attendingPatient.getCurrentRoom() == null || !attendingPatient.getCurrentRoom().equals(room)) {
+            responseObserver.onError(Status.NOT_FOUND
+                    .withDescription("Patient " + request.getPatientName() + " not assigned to room #" + request.getRoom())
+                    .asRuntimeException());
+            return null;
+        }
+
         attendingRoom.setStatus(EmergencyRoomStatus.FREE.getValue());
         attendingDoctor.setAvailability(AvailabilityDoctor.AVAILABLE.getValue());
         attendingDoctor.setRoom(null);
