@@ -1,7 +1,7 @@
 package ar.edu.itba.ppc.client;
 
 import ar.edu.itba.ppc.client.utilsConsole.ClientArgs;
-import ar.edu.itba.ppc.client.utilsConsole.ClientCallback;
+import ar.edu.itba.ppc.client.utilsConsole.ClientActionHandler;
 import ar.edu.itba.tp1g5.DoctorRequest;
 import ar.edu.itba.tp1g5.DoctorResponse;
 import ar.edu.itba.tp1g5.RoomResponse;
@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import static ar.edu.itba.ppc.client.utilsConsole.ClientUtils.parseArgs;
+import static ar.edu.itba.ppc.client.utilsConsole.ClientParserHelper.parseArgs;
 
 public class EmergencyAdminClient {
     private static Logger logger = LoggerFactory.getLogger(EmergencyAdminClient.class);
@@ -46,7 +46,7 @@ public class EmergencyAdminClient {
 
             switch (action) {
                 case "addRoom":
-                    RoomResponse response = ClientCallback.executeHandling(() -> blockingStub.addRoom(Empty.newBuilder().build()));
+                    RoomResponse response = ClientActionHandler.executeHandling(() -> blockingStub.addRoom(Empty.newBuilder().build()));
                     if(Objects.nonNull(response))
                         logger.info("Room {} added successfully", response.getRoom());
                     break;
@@ -59,7 +59,7 @@ public class EmergencyAdminClient {
                             .setDoctorName(doctorName)
                             .setLevel(Integer.parseInt(level))
                             .build();
-                    DoctorResponse addResponse = ClientCallback.executeHandling(() -> blockingStub.addDoctor(addRequest));
+                    DoctorResponse addResponse = ClientActionHandler.executeHandling(() -> blockingStub.addDoctor(addRequest));
                     if(Objects.nonNull(addResponse))
                         logger.info("Doctor {} ({}) added successfully", addResponse.getDoctorName(), addResponse.getLevel());
                     break;
@@ -72,7 +72,7 @@ public class EmergencyAdminClient {
                             .setDoctorName(doctorName)
                             .setAvailability(availability)
                             .build();
-                    DoctorResponse setResponse = ClientCallback.executeHandling(() -> blockingStub.setDoctor(setRequest));
+                    DoctorResponse setResponse = ClientActionHandler.executeHandling(() -> blockingStub.setDoctor(setRequest));
                     if(Objects.nonNull(setResponse))
                         logger.info("Doctor {} ({}) is {}", setResponse.getDoctorName(), setResponse.getLevel(), setResponse.getAvailability());
                     break;
@@ -84,7 +84,7 @@ public class EmergencyAdminClient {
                     DoctorRequest checkRequest = DoctorRequest.newBuilder()
                             .setDoctorName(doctorName)
                             .build();
-                    DoctorResponse checkResponse = ClientCallback.executeHandling(() -> blockingStub.checkDoctor(checkRequest));
+                    DoctorResponse checkResponse = ClientActionHandler.executeHandling(() -> blockingStub.checkDoctor(checkRequest));
                     if(Objects.nonNull(checkResponse))
                         logger.info("Doctor {} ({}) is {}", checkResponse.getDoctorName(), checkResponse.getLevel(), checkResponse.getAvailability());
                     break;

@@ -1,7 +1,7 @@
 package ar.edu.itba.ppc.client;
 
 import ar.edu.itba.ppc.client.utilsConsole.ClientArgs;
-import ar.edu.itba.ppc.client.utilsConsole.ClientCallback;
+import ar.edu.itba.ppc.client.utilsConsole.ClientActionHandler;
 import ar.edu.itba.tp1g5.EmergencyCareListResponse;
 import ar.edu.itba.tp1g5.EmergencyCareRequest;
 import ar.edu.itba.tp1g5.EmergencyCareResponse;
@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import static ar.edu.itba.ppc.client.utilsConsole.ClientUtils.parseArgs;
+import static ar.edu.itba.ppc.client.utilsConsole.ClientParserHelper.parseArgs;
 
 public class EmergencyCareClient {
     private static Logger logger = LoggerFactory.getLogger(EmergencyAdminClient.class);
@@ -47,14 +47,14 @@ public class EmergencyCareClient {
                     EmergencyCareRequest request = EmergencyCareRequest.newBuilder()
                             .setRoom(Integer.parseInt(room))
                             .build();
-                    EmergencyCareResponse response = ClientCallback.executeHandling(() -> blockingStub.startEmergencyCare(request));
+                    EmergencyCareResponse response = ClientActionHandler.executeHandling(() -> blockingStub.startEmergencyCare(request));
                     if (Objects.nonNull(response)) {
                         logger.info("Patient {} ({}) and Doctor {} ({}) are now in Room #{}",
                                 response.getPatientName(), response.getPatientLevel(), response.getDoctorName(), response.getDoctorLevel(), response.getRoom());
                     }
                 }
                 case "careAllPatients" -> {
-                    EmergencyCareListResponse response = ClientCallback.executeHandling(() -> blockingStub.startAllEmergencyCare(Empty.newBuilder().build()));
+                    EmergencyCareListResponse response = ClientActionHandler.executeHandling(() -> blockingStub.startAllEmergencyCare(Empty.newBuilder().build()));
                     if (Objects.nonNull(response)) {
                         for (EmergencyCareResponse careResponse : response.getEmergencyCareListList()) {
                             logger.info("Patient {} ({}) and Doctor {} ({}) are now in Room #{}",
@@ -76,7 +76,7 @@ public class EmergencyCareClient {
                             .setDoctorName(doctorName)
                             .setPatientName(patientName)
                             .build();
-                    EmergencyCareResponse response = ClientCallback.executeHandling(() -> blockingStub.endEmergencyCare(request));
+                    EmergencyCareResponse response = ClientActionHandler.executeHandling(() -> blockingStub.endEmergencyCare(request));
                     if(Objects.nonNull(response)) {
                         logger.info("Patient {} ({}) has been discharged from Doctor {} ({}) and the Room #{} is now {}",
                                 response.getPatientName(), response.getPatientLevel(), response.getDoctorName(), response.getDoctorLevel(), response.getRoom(), response.getRoomStatus());

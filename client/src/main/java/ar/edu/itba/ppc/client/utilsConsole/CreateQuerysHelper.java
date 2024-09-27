@@ -6,7 +6,7 @@ import ar.edu.itba.tp1g5.WaitingRoom;
 
 import java.util.List;
 
-public class CreateQuerys {
+public class CreateQuerysHelper {
     public static void queryRoomStatusFile(List<RoomStatus> roomStatuses, String outPath) {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("Room,Status,Patient,Doctor\n");
@@ -20,7 +20,7 @@ public class CreateQuerys {
                         .append(row.getDoctorName()).append(" (" + row.getDoctorLevel() + ")").append("\n");
             }
         }
-        ClientUtils.createOutputFile(outPath, stringBuilder.toString());
+        ClientParserHelper.createOutputFile(outPath, stringBuilder.toString());
     }
 
     public static void queryWaitingRoomFile(List<WaitingRoom> roomStatuses, String outPath) {
@@ -30,7 +30,7 @@ public class CreateQuerys {
             stringBuilder.append(row.getPatientName()).append(",")
                     .append(row.getPatientLevel()).append("\n");
         }
-        ClientUtils.createOutputFile(outPath, stringBuilder.toString());
+        ClientParserHelper.createOutputFile(outPath, stringBuilder.toString());
     }
 
     public static void queryCaresFile(List<CareCompleted> roomStatuses, String outPath) {
@@ -42,6 +42,6 @@ public class CreateQuerys {
                         .append(row.getDoctorName()).append(" (" + row.getDoctorLevel() + ")").append("\n");
 
         }
-        ClientUtils.createOutputFile(outPath, stringBuilder.toString());
+        ClientParserHelper.createOutputFile(outPath, stringBuilder.toString());
     }
 }

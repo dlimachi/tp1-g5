@@ -12,8 +12,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ClientUtils {
-    private static final Logger logger = LoggerFactory.getLogger(ClientUtils.class);
+public class ClientParserHelper {
+    private static final Logger logger = LoggerFactory.getLogger(ClientParserHelper.class);
 
     public static Map<String,String> parseArgs(String[] args) {
         Map<String,String> map = new HashMap<>();
